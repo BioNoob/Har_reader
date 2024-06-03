@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32510.428
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Har_reader", "Har_reader.csproj", "{BC1CBC6D-F4EC-4072-A41B-ECD2F923453F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BC1CBC6D-F4EC-4072-A41B-ECD2F923453F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1CBC6D-F4EC-4072-A41B-ECD2F923453F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1CBC6D-F4EC-4072-A41B-ECD2F923453F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1CBC6D-F4EC-4072-A41B-ECD2F923453F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {08BB8B2B-52AA-4388-A627-F68410C39E7F}
+	EndGlobalSection
+EndGlobal

@@ -132,7 +132,8 @@ namespace Har_reader
         {
             if(!string.IsNullOrWhiteSpace(Token.Text))
             {
-                test("Token.Text");
+                test(Token.Text);
+                //a304b3ad82e481804694dfdceb82b4784c694f0c096b28d22221d5fb63fcb53b1be5e19989037f08a40182172067d2efd163250ac8c8a9cc078b348847e50a68
             }
         }
     }

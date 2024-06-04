@@ -22,7 +22,7 @@ namespace Har_reader
     {
         public async void test(string token)
         {
-            var url = new Uri("wss://ton-rocket-server.pfplabs.xyz/");
+            var url = new Uri("wss://ton-rocket-server.pfplabs.xyz/"); //https://odyssey.pfplabs.xyz/?token=a304b3ad82e481804694dfdceb82b4784c694f0c096b28d22221d5fb63fcb53b1be5e19989037f08a40182172067d2efd163250ac8c8a9cc078b348847e50a68&locale=en
             //https://github.com/Marfusios/websocket-client
             var exitEvent = new ManualResetEvent(false);
 
@@ -32,7 +32,7 @@ namespace Har_reader
                 await client.Start();
 
                 client.Send("{\"type\":\"join\",\"data\":{\"initData\":\"\",\"browserInitData\":{\"token\":\"" + token +"\",\"locale\":\"en\"}}}");
-                //exitEvent.WaitOne();
+                exitEvent.WaitOne();
             }
         }
         public MainWindow()

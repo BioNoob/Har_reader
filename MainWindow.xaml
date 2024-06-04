@@ -27,23 +27,57 @@
             <Image Source="Resources/close.png" Margin="0" Stretch="UniformToFill" />
         </Button>
         <Label Content="Har reader" Padding="0" VerticalContentAlignment="Top" HorizontalAlignment="Left" HorizontalContentAlignment="Center" Margin="0,-10,0,10" FontWeight="Bold"/>
-        <Button Grid.Row="2" Height="20" Content="Select file" Width="100" Click="Button_Click" HorizontalAlignment="Left"/>
+        <Button Grid.Row="2" Height="20" Content="Select file" Width="100" Click="Button_Click" HorizontalAlignment="Left" x:Name="SelectFileBtn"/>
         <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Height="20" Content="Connect" Width="100" Click="ConnectBtn_Click" HorizontalAlignment="Left" x:Name="ConnectBtn"/>
-            <TextBox Grid.Column="1" x:Name="Token" HorizontalAlignment="Stretch" Margin="5,0,0,0" TextWrapping="WrapWithOverflow"/>
+            <Button Grid.Column="2" Height="20" Content="DisConnect" Width="100" Click="DropConnectBtn_Click" HorizontalAlignment="Left" x:Name="DropConnectBtn" IsEnabled="False"/>
+            <TextBox Grid.Column="1" x:Name="Tokentxb" HorizontalAlignment="Stretch" Margin="5,0,5,0" TextWrapping="WrapWithOverflow"/>
         </Grid>
         <TextBlock  Grid.Row="2" x:Name="FilePath" Text="" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="110,0,110,0" TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis"/>
         <Button Grid.Row="2" x:Name="csvexp" IsEnabled="False" Height="20" Content="Export csv" Width="100" Click="Button_Click_1" HorizontalAlignment="Right" Grid.Column="1"/>
-        <DataGrid Grid.Row="3" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray" AlternatingRowBackground="AliceBlue">
+        <DataGrid SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False"
+            Grid.Row="3" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Время UTC" Binding="{Binding Path=time_normal}" Width="0.5*" />
-                <DataGridTextColumn Header="Значение" Binding="{Binding Path=GetData.game_crash_normal}" Width="0.5*" />
+                <DataGridTextColumn Header="Время UTC" Binding="{Binding Path=time_normal, Mode=OneTime}" Width="0.5*" />
+                <DataGridTextColumn Header="Значение" Binding="{Binding Path=GetData.game_crash_normal, Mode=OneTime}" Width="0.5*" />
             </DataGrid.Columns>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=GetData.lower}" Value="true">
+                            <Setter Property="Background" Value="#CFF30021"></Setter>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
         </DataGrid>
-        <TextBlock x:Name="Counter" Text="" Grid.Row="3" VerticalAlignment="Bottom" Grid.ColumnSpan="2" HorizontalAlignment="Right" Padding="0" Margin="0,5,0,-5"/>
+        <Grid Grid.Row="4" Grid.Column="1" Margin="0,5,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" HorizontalAlignment="Right" Content="ALERT!"
+                    Foreground="Yellow" VerticalAlignment="Bottom"
+                    Background="Red" Padding="0" Opacity="1" Margin="0,5,5,0">
+                <Label.Style>
+                    <Style TargetType="Label">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=GetData.lower}" Value="true">
+                                <Setter Property="Opacity" Value="0"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Label.Style>
+            </Label>
+            <Label Content="Count of rec:" VerticalAlignment="Bottom" HorizontalAlignment="Right" Grid.Column="1" Padding="0" Margin="0,5,5,0"/>
+            <TextBlock x:Name="Counter" Text="" VerticalAlignment="Bottom" HorizontalAlignment="Right" Padding="0" Margin="0,5,0,0" Grid.Column="2"/>
+        </Grid>
+
     </Grid>
 </Window>

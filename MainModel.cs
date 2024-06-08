@@ -1,4 +1,5 @@
-﻿using CsvHelper.Configuration;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -6,12 +7,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Data;
 using Websocket.Client;
 
@@ -31,12 +33,7 @@ namespace Har_reader
                 _webSocketMessages wm = new _webSocketMessages();
                 wm.Time = DateTimeOffset.Now.ToUnixTimeSeconds();
                 wm.Data = msg.Text;
-                //Application.Current.Dispatcher.Invoke(new Action(() =>
-                //{
                 Answer.Insert(0, wm);
-                //Answer.Add(wm);
-
-                //}));
                 Debug.WriteLine($"Message: {msg}");
             });
         }
@@ -55,7 +52,7 @@ namespace Har_reader
                 {
                     bool lower = (e.NewItems[0] as _webSocketMessages).GetData.Lower;
                     Counter_lowers = lower ? Counter_lowers + 1 : Counter_lowers;
-                    if (Counter_lowers > 3)
+                    if (Counter_lowers > LowerCheckValue)
                         AlertSignalOn = true;
                     if (!lower)
                     {
@@ -87,6 +84,7 @@ namespace Har_reader
         public int Counter_lowers { get => counter_lowers; set => SetProperty(ref counter_lowers, value); }
         public bool AlertSignalOn { get => alertsignalon; set => SetProperty(ref alertsignalon, value); }
         public string Status { get => status; set => SetProperty(ref status, value); }
+        public int LowerCheckValue { get => lowerCheckValue; set => SetProperty(ref lowerCheckValue, value); }
 
         public delegate void AlertBlink(bool blink);
         public event AlertBlink DoAlertBlink;
@@ -106,7 +104,6 @@ namespace Har_reader
                         Answer.Clear();
                         Status = "Connecting..";
                         await Task.Run(() => connect(Token));
-                        //a304b3ad82e481804694dfdceb82b4784c694f0c096b28d22221d5fb63fcb53b1be5e19989037f08a40182172067d2efd163250ac8c8a9cc078b348847e50a68
                     }
                 },
                 (obj) => true
@@ -158,10 +155,85 @@ namespace Har_reader
                 );
             }
         }
+        private CommandHandler _exitcommand;
+        public CommandHandler ExitCommand
+        {
+            get
+            {
+                return _exitcommand ??= new CommandHandler(obj =>
+                {
+                    if (client.IsStarted)
+                    {
+                        Is_connected = false;
+                        exitEvent.Set();
+                        client.Stop(WebSocketCloseStatus.Empty, string.Empty);
+                        Status = "Disconnected";
+                    }
+                    Environment.Exit(1);
+                },
+                (obj) => true
+                );
+            }
+        }
+        private CommandHandler _savecsvcommand;
+        public CommandHandler SaveCsvCommand
+        {
+            get
+            {
+                return _savecsvcommand ??= new CommandHandler(obj =>
+                {
+                    Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
+                    sfd.RestoreDirectory = true;
+                    sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";
+                    sfd.DefaultExt = "csv";
+                    sfd.InitialDirectory = path;
+                    sfd.Title = "Save export file";
+                    sfd.FileName = "EXPORT.csv";
+                    if (sfd.ShowDialog() == true)
+                    {
+                        using (var writer = new StreamWriter(sfd.FileName))
+                        using (var csv = new CsvWriter(writer,
+                            new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" }))
+                        {
+                            csv.Context.RegisterClassMap<FooMap>();
+                            csv.WriteRecords(Answer);
+                        }
+                        ProcessStartInfo psi = new ProcessStartInfo();
+                        psi.FileName = sfd.FileName;
+                        psi.UseShellExecute = true;
+                        Process.Start(psi);
+                        Status = "Saved";
+                    }
+                },
+                (obj) => true
+                );
+            }
+        }
+        private CommandHandler _disconnectCommand;
+        private int lowerCheckValue;
+
+        public CommandHandler DisconnectCommand
+        {
+            get
+            {
+                return _disconnectCommand ??= new CommandHandler(obj =>
+                {
+                    if (client.IsStarted)
+                    {
+                        Is_connected = false;
+                        exitEvent.Set();
+                        client.Stop(WebSocketCloseStatus.Empty, string.Empty);
+                        Status = "Disconnected";
+                    }
+                },
+                (obj) => true
+                );
+            }
+        }
 
         public async void connect(string token)
         {
-            //https://odyssey.pfplabs.xyz/?token=a304b3ad82e481804694dfdceb82b4784c694f0c096b28d22221d5fb63fcb53b1be5e19989037f08a40182172067d2efd163250ac8c8a9cc078b348847e50a68&locale=en
+            //https://odyssey.pfplabs.xyz/?token=8a308ac635aa0c626366a3d4b8855f0da128fbe36df18253ac058e6a39cd77ecea99751418853aa9ba4b91675ac81bfc945b429a76ef1a54fc3c25da37b03738&locale=en
             //https://github.com/Marfusios/websocket-client
             Token = token;
             try
@@ -183,38 +255,6 @@ namespace Har_reader
             //}));
             client.Send(init_mess);
             exitEvent.WaitOne();
-        }
-    }
-    public class game_crash_mess : Proper
-    {
-        private double elapsed;
-        private double game_crash;
-
-        public double Elapsed { get => elapsed; set => SetProperty(ref elapsed, value); }
-        public double Game_crash { get => game_crash; set => SetProperty(ref game_crash, value); }
-        public bool Lower => Game_crash_normal < 2.0;
-        public double Game_crash_normal => Game_crash / 100d;
-    }
-    public class _webSocketMessages : Proper
-    {
-        private string data;
-        private double time;
-        private string type;
-
-        public string Type { get => type; set => SetProperty(ref type, value); }
-        public double Time { get => time; set => SetProperty(ref time, value); }
-        public string Data { get => data; set => SetProperty(ref data, value); }
-        public DateTime Time_normal => new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Time).ToLocalTime();
-        //public string time_str => String.Format("{0:dd.MM.yyyy HH:mm:ss}", time_normal);
-        public game_crash_mess GetData => JsonConvert.DeserializeObject<game_crash_mess>(JObject.Parse(Data).SelectToken("data").ToString());
-
-    }
-    public sealed class FooMap : ClassMap<_webSocketMessages>
-    {
-        public FooMap()
-        {
-            Map(m => m.Time_normal);
-            Map(m => m.GetData.Game_crash_normal);
         }
     }
 }

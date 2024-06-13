@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,7 +28,20 @@ namespace Har_reader
 
         private void TextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
+            e.Handled = !e.Text.Any(x => Char.IsDigit(x) || '.'.Equals(x));
+        }
 
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var x = sender as TextBox;
+            if (string.IsNullOrWhiteSpace(x.Text))
+            {
+                x.Text = "0";
+            }
+            //else if(x.Text.EndsWith('.'))
+            //{
+            //    x.Text = "0.0";
+            //}
         }
     }
 }

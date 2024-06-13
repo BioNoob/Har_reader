@@ -17,116 +17,136 @@
         </TaskbarItemInfo>
 
     </Window.TaskbarItemInfo>
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1"/>
-        <Button Width="25" Height="25" x:Name="CloseBtn" Command="{Binding ExitCommand}" HorizontalAlignment="Right" Grid.Column="2" 
-                Padding="0" Margin="0,-10,0,10" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-            <Image Source="Resources/close.png" Margin="0" Stretch="UniformToFill" />
-        </Button>
-        <Label Content="Har reader" Padding="0" VerticalContentAlignment="Top" HorizontalAlignment="Left" HorizontalContentAlignment="Center" Margin="0,-10,0,10" FontWeight="Bold"/>
-        <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="auto"/>
-                <RowDefinition Height="auto"/>
-            </Grid.RowDefinitions>
-            <Button Grid.Column="0" Height="20" Content="Connect" Width="70" HorizontalAlignment="Left" x:Name="ConnectBtn" Command="{Binding ConnectCommand}">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="True">
-                                <Setter Property="IsEnabled" Value="False"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="False">
-                                <Setter Property="IsEnabled" Value="True"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
+    <DockPanel ClipToBounds="True">
+        <Grid Margin="5,0" DockPanel.Dock="Top">
+            <Button Width="25" Height="25" x:Name="CloseBtn" Command="{Binding ExitCommand}" HorizontalAlignment="Right" Grid.Column="2" 
+                Padding="0" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Image Source="Resources/close.png" Margin="0" Stretch="UniformToFill" />
             </Button>
-            <Button Grid.Column="2" Height="20" Content="DisConnect" Width="70" HorizontalAlignment="Left" x:Name="DropConnectBtn" Command="{Binding DisconnectCommand}">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="True">
-                                <Setter Property="IsEnabled" Value="True"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="False">
-                                <Setter Property="IsEnabled" Value="False"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <TextBox Grid.Column="1" x:Name="Tokentxb" HorizontalAlignment="Stretch" Margin="5,0,5,0" TextWrapping="NoWrap" Text="{Binding Token}"/>
-            <Button Grid.Row="1" Height="20" Content="Select file" Width="70" Command="{Binding SelectFileCommand}" HorizontalAlignment="Left" x:Name="SelectFileBtn" Margin="0,10,0,0">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="True">
-                                <Setter Property="IsEnabled" Value="False"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding Is_connected}" Value="False">
-                                <Setter Property="IsEnabled" Value="True"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
-            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="FilePath" HorizontalAlignment="Center"
-                    TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding Status}"/>
-            <Button Grid.Row="1" Grid.Column="2" x:Name="csvexp" Height="20" Content="Export csv" Width="70" Command="{Binding SaveCsvCommand}" HorizontalAlignment="Left" VerticalAlignment="Bottom">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Counter}" Value="0">
-                                <Setter Property="IsEnabled" Value="False"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
+            <Label Content="Har reader" Padding="0" VerticalContentAlignment="Center"
+                   HorizontalAlignment="Left" HorizontalContentAlignment="Center" FontWeight="Bold"/>
         </Grid>
-        <DataGrid SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
-            Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" Width="0.5*" />
-                <DataGridTextColumn Header="Значение" Binding="{Binding GetData.Game_crash_normal, Mode=OneTime}" Width="0.5*" />
-            </DataGrid.Columns>
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding GetData.Lower}" Value="true">
-                            <Setter Property="Background" Value="#CFF30021"></Setter>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
-        </DataGrid>
-        <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,0" HorizontalAlignment="Right">
+        <Grid Margin="5,0" DockPanel.Dock="Bottom">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" HorizontalAlignment="Right" Content="ALERT!"
-                    Foreground="Yellow" VerticalAlignment="Bottom"
-                    Background="Red" Padding="0" Opacity="1" Margin="0,5,5,0">
+            <Grid Grid.Row="0" Grid.ColumnSpan="3" Height="25" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="25"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="{Binding }" Grid.Column="0"/>
+                <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
+                <Label Content="{Binding }" Grid.Column="2"/>
+            </Grid>
+            <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1"/>
+            <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <Button Grid.Column="0" Height="20" Content="Connect" Width="70" HorizontalAlignment="Left" x:Name="ConnectBtn" Command="{Binding ConnectCommand}">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Is_connected}" Value="True">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Is_connected}" Value="False">
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Grid.Column="2" Height="20" Content="DisConnect" Width="70" HorizontalAlignment="Left" x:Name="DropConnectBtn" Command="{Binding DisconnectCommand}">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Is_connected}" Value="True">
+                                    <Setter Property="IsEnabled" Value="True"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Is_connected}" Value="False">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <TextBox Grid.Column="1" x:Name="Tokentxb" HorizontalAlignment="Stretch" Margin="5,0,5,0" TextWrapping="NoWrap" Text="{Binding Token}"/>
+                <!--<Button Grid.Row="1" Height="20" Content="Select file" Width="70" Command="{Binding SelectFileCommand}" 
+            HorizontalAlignment="Left" x:Name="SelectFileBtn" Margin="0,10,0,0">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Is_connected}" Value="True">
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Is_connected}" Value="False">
+                                <Setter Property="IsEnabled" Value="True"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>-->
+                <Label Grid.Row="1" Height="20" Content="Status:" Margin="0,10,0,0" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="FilePath" HorizontalAlignment="Center"
+                    TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding Status}"/>
+                <Button Grid.Row="1" Grid.Column="2" x:Name="csvexp" Height="20" Content="Export csv" Width="70" Command="{Binding SaveCsvCommand}" HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Counter}" Value="0">
+                                    <Setter Property="IsEnabled" Value="False"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+            <DataGrid SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
+            Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" Width="0.5*" />
+                    <DataGridTextColumn Header="Значение" Binding="{Binding GetData.Game_crash_normal, Mode=OneTime}" Width="0.5*" />
+                </DataGrid.Columns>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding GetData.Lower}" Value="true">
+                                <Setter Property="Background" Value="#CFF30021"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
+            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5" HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Count of rec:" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
+                   Grid.Column="0" Padding="0" Margin="0,5,5,0"/>
+                <TextBlock x:Name="Counter" Text="{Binding Counter}" VerticalAlignment="Bottom" 
+                       HorizontalAlignment="Right" Padding="0" Margin="0,5,0,0" Grid.Column="1"/>
+            </Grid>
+            <Label Grid.Column="2" HorizontalAlignment="Center" Content="ALERT!" FontSize="16"
+                    Foreground="Yellow" VerticalAlignment="Bottom" Grid.Row="3"
+                    Background="Red" Padding="25,0" Opacity="1" Margin="0,5">
                 <Label.Style>
                     <Style TargetType="Label">
                         <Style.Triggers>
@@ -143,9 +163,6 @@
                     </Style>
                 </Label.Style>
             </Label>
-            <Label Content="Count of rec:" VerticalAlignment="Bottom" HorizontalAlignment="Right" Grid.Column="1" Padding="0" Margin="0,5,5,0"/>
-            <TextBlock x:Name="Counter" Text="{Binding Counter}" VerticalAlignment="Bottom" HorizontalAlignment="Right" Padding="0" Margin="0,5,0,0" Grid.Column="2"/>
         </Grid>
-
-    </Grid>
+    </DockPanel>
 </Window>

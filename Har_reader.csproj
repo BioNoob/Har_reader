@@ -17,10 +17,14 @@
 
   <ItemGroup>
     <None Remove="close.png" />
+    <None Remove="Resources\punk-token.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\close.png" />
+    <EmbeddedResource Include="Resources\punk-token.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

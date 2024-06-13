@@ -14,13 +14,17 @@ namespace Har_reader
         private bool autoBetOn;
         private Bet bet;
         private int alertVal;
+        private double lowerCheckVal;
 
         public bool AutoBetOn { get => autoBetOn; set => SetProperty(ref autoBetOn, value); }
         public Bet Bet { get => bet; set => SetProperty(ref bet, value); }
         public int AlertVal { get => alertVal; set => SetProperty(ref alertVal, value); }
+        public double LowerCheckVal { get => lowerCheckVal; set => SetProperty(ref lowerCheckVal, value); }
         public BetsModel()
         {
-
+            Bet = new Bet(); 
+            Bet.BetVal = 0.1;
+            Bet.CashOut = 0.1;
         }
 
         public CommandHandler ChangeAutoCasheVal
@@ -29,7 +33,15 @@ namespace Har_reader
             {
                 return _cahngeautocashCommand ??= new CommandHandler(obj =>
                 {
-
+                    switch (obj as string)//parametr;
+                    {
+                        case "+":
+                            Bet.CashOut += 0.1;
+                            break;
+                        case "-":
+                            Bet.CashOut -= 0.1;
+                            break;
+                    }
                 },
                 (obj) => true
                 );
@@ -42,7 +54,15 @@ namespace Har_reader
             {
                 return _cahngebetvalCommand ??= new CommandHandler(obj =>
                 {
-                    var q = obj as string;//parametr;
+                    switch (obj as string)//parametr;
+                    {
+                        case "+":
+                            Bet.BetVal *= 2;
+                            break;
+                        case "-":
+                            Bet.BetVal /= 2;
+                            break;
+                    }
                 },
                 (obj) => true
                 );
@@ -56,7 +76,15 @@ namespace Har_reader
             {
                 return _cahngealertvalCommand ??= new CommandHandler(obj =>
                 {
-
+                    switch (obj as string)//parametr;
+                    {
+                        case "+":
+                            AlertVal += 1;
+                            break;
+                        case "-":
+                            AlertVal -= 1;
+                            break;
+                    }
                 },
                 (obj) => true
                 );

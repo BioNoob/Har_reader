@@ -27,15 +27,15 @@ namespace Har_reader
             Answer.CollectionChanged += Answer_CollectionChanged;
             object lockObj = new object();
             BindingOperations.EnableCollectionSynchronization(Answer, lockObj);
-            client.ReconnectionHappened.Subscribe(info => client.Send(init_mess));
-            client.MessageReceived.Where(t => !string.IsNullOrEmpty(t.Text)).Where(t => t.Text.Contains("\"type\":\"game_crash\"")).Subscribe(msg =>
-            {
-                _webSocketMessages wm = new _webSocketMessages();
-                wm.Time = DateTimeOffset.Now.ToUnixTimeSeconds();
-                wm.Data = msg.Text;
-                Answer.Insert(0, wm);
-                Debug.WriteLine($"Message: {msg}");
-            });
+            Client = new OdysseyClient();
+            //client.MessageReceived.Where(t => !string.IsNullOrEmpty(t.Text)).Where(t => t.Text.Contains("\"type\":\"game_crash\"")).Subscribe(msg =>
+            //{
+            //    _webSocketMessages wm = new _webSocketMessages();
+            //    wm.Time = DateTimeOffset.Now.ToUnixTimeSeconds();
+            //    wm.Data = msg.Text;
+            //    Answer.Insert(0, wm);
+            //    Debug.WriteLine($"Message: {msg}");
+            //});
         }
 
         private void Answer_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -47,10 +47,10 @@ namespace Har_reader
                 //    csvexp.IsEnabled = true;
                 //else
                 //    csvexp.IsEnabled = false;
-                Counter = y.Count;
+                Counter = y.Where(t => t.Type == "").Count();
                 if (e.Action == NotifyCollectionChangedAction.Add)
                 {
-                    bool lower = (e.NewItems[0] as _webSocketMessages).GetData.Lower;
+                    bool lower = (e.NewItems[0] as _webSocketMessages).GetCrashData.Lower;
                     Counter_lowers = lower ? Counter_lowers + 1 : Counter_lowers;
                     if (Counter_lowers > LowerCheckValue)
                         AlertSignalOn = true;
@@ -71,14 +71,15 @@ namespace Har_reader
         private int counter_lowers;
         private ObservableCollection<_webSocketMessages> answer = new ObservableCollection<_webSocketMessages>();
         private string token;
-        private const string _init_mess = "{\"type\":\"join\",\"data\":{\"initData\":\"\",\"browserInitData\":{\"token\":\"" + "ECHO" + "\",\"locale\":\"en\"}}}";
-        private string init_mess = "";
         private bool is_connected;
         private bool alertsignalon;
         private string status;
-        private string path;
+        private string path; 
+        private int lowerCheckValue;
+        private OdysseyClient client;
+        private OdysseyClient Client { get => client; set => client = value; }
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
-        public string Token { get => token; set { SetProperty(ref token, value); init_mess = _init_mess.Replace("ECHO", value); } }
+        public string Token { get => token; set => SetProperty(ref token, value); }
         public ObservableCollection<_webSocketMessages> Answer { get => answer; set => SetProperty(ref answer, value); }
         public int Counter { get => counter; set => SetProperty(ref counter, value); }
         public int Counter_lowers { get => counter_lowers; set => SetProperty(ref counter_lowers, value); }
@@ -89,8 +90,7 @@ namespace Har_reader
         public delegate void AlertBlink(bool blink);
         public event AlertBlink DoAlertBlink;
 
-        ManualResetEvent exitEvent = new ManualResetEvent(false);
-        WebsocketClient client = new WebsocketClient(new Uri("wss://ton-rocket-server.pfplabs.xyz/"));
+
 
         private CommandHandler _connCommand;
         public CommandHandler ConnectCommand
@@ -110,51 +110,51 @@ namespace Har_reader
                 );
             }
         }
-        private CommandHandler _selectfilecomand;
-        public CommandHandler SelectFileCommand
-        {
-            get
-            {
-                return _selectfilecomand ??= new CommandHandler(obj =>
-                {
-                    Microsoft.Win32.OpenFileDialog t = new Microsoft.Win32.OpenFileDialog();
-                    t.RestoreDirectory = true;
-                    t.Filter = "Har files (*.har)|*.har|All files (*.*)|*.*";
-                    t.DefaultExt = "har";
-                    t.Multiselect = true;
-                    if (t.ShowDialog() == true)
-                    {
-                        Answer.Clear();
-                        path = Path.GetDirectoryName(t.FileName);
-                        Status = path;
-                        foreach (var file in t.FileNames)
-                        {
-                            string file_cont = File.ReadAllText(file);
-                            JObject o = JObject.Parse(file_cont);
-                            var messages = o.SelectTokens("log.entries").Select(t => t.Children()["_webSocketMessages"]).ToList();
-                            foreach (var item in messages)
-                            {
-                                foreach (var token in item)
-                                {
-                                    List<_webSocketMessages> q = JsonConvert.DeserializeObject<List<_webSocketMessages>>(token.ToString());
-                                    q.Where(t => t.Data.Contains("\"type\":\"game_crash\"")).Where(t => t.GetData.Game_crash != 0).ToList().ForEach(p => Answer.Add(p));
-                                }
-                            }
-                        }
-                    }
-                    //if(a)
-                    //{
-                    //    DoAlertBlink?.Invoke(false);
-                    //    a = false;
-                    //    return;
-                    //}
-                    //DoAlertBlink?.Invoke(true);
-                    //a = true;
-                },
-                (obj) => true
-                );
-            }
-        }
+        //private CommandHandler _selectfilecomand;
+        //public CommandHandler SelectFileCommand
+        //{
+        //    get
+        //    {
+        //        return _selectfilecomand ??= new CommandHandler(obj =>
+        //        {
+        //            Microsoft.Win32.OpenFileDialog t = new Microsoft.Win32.OpenFileDialog();
+        //            t.RestoreDirectory = true;
+        //            t.Filter = "Har files (*.har)|*.har|All files (*.*)|*.*";
+        //            t.DefaultExt = "har";
+        //            t.Multiselect = true;
+        //            if (t.ShowDialog() == true)
+        //            {
+        //                Answer.Clear();
+        //                path = Path.GetDirectoryName(t.FileName);
+        //                Status = path;
+        //                foreach (var file in t.FileNames)
+        //                {
+        //                    string file_cont = File.ReadAllText(file);
+        //                    JObject o = JObject.Parse(file_cont);
+        //                    var messages = o.SelectTokens("log.entries").Select(t => t.Children()["_webSocketMessages"]).ToList();
+        //                    foreach (var item in messages)
+        //                    {
+        //                        foreach (var token in item)
+        //                        {
+        //                            List<_webSocketMessages> q = JsonConvert.DeserializeObject<List<_webSocketMessages>>(token.ToString());
+        //                            q.Where(t => t.Data.Contains("\"type\":\"game_crash\"")).Where(t => t.GetData.Game_crash != 0).ToList().ForEach(p => Answer.Add(p));
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //            //if(a)
+        //            //{
+        //            //    DoAlertBlink?.Invoke(false);
+        //            //    a = false;
+        //            //    return;
+        //            //}
+        //            //DoAlertBlink?.Invoke(true);
+        //            //a = true;
+        //        },
+        //        (obj) => true
+        //        );
+        //    }
+        //}
         private CommandHandler _exitcommand;
         public CommandHandler ExitCommand
         {
@@ -162,13 +162,14 @@ namespace Har_reader
             {
                 return _exitcommand ??= new CommandHandler(obj =>
                 {
-                    if (client.IsStarted)
-                    {
-                        Is_connected = false;
-                        exitEvent.Set();
-                        client.Stop(WebSocketCloseStatus.Empty, string.Empty);
-                        Status = "Disconnected";
-                    }
+                    //if (client.IsStarted)
+                    //{
+                    //    Is_connected = false;
+                    //    exitEvent.Set();
+                    //    client.Stop(WebSocketCloseStatus.Empty, string.Empty);
+                    //    Status = "Disconnected";
+                    //}
+                    Client.StopClient();
                     Environment.Exit(1);
                 },
                 (obj) => true
@@ -210,7 +211,6 @@ namespace Har_reader
             }
         }
         private CommandHandler _disconnectCommand;
-        private int lowerCheckValue;
 
         public CommandHandler DisconnectCommand
         {
@@ -218,27 +218,30 @@ namespace Har_reader
             {
                 return _disconnectCommand ??= new CommandHandler(obj =>
                 {
-                    if (client.IsStarted)
-                    {
-                        Is_connected = false;
-                        exitEvent.Set();
-                        client.Stop(WebSocketCloseStatus.Empty, string.Empty);
-                        Status = "Disconnected";
-                    }
+                    //if (client.IsStarted)
+                    //{
+                    //    Is_connected = false;
+                    //    exitEvent.Set();
+                    //    client.Stop(WebSocketCloseStatus.Empty, string.Empty);
+                    //    Status = "Disconnected";
+                    //}
+                    Client.StopClient();
                 },
                 (obj) => true
                 );
             }
         }
 
-        public async void connect(string token)
+        public void connect(string token)
         {
             //https://odyssey.pfplabs.xyz/?token=8a308ac635aa0c626366a3d4b8855f0da128fbe36df18253ac058e6a39cd77ecea99751418853aa9ba4b91675ac81bfc945b429a76ef1a54fc3c25da37b03738&locale=en
             //https://github.com/Marfusios/websocket-client
+            //1b3f392abbae5c40cfa12760c7fa08df1b9abfcbb02698348982918a032f0c195e5adf38ae02ba3834d0f586db596475e5eaf111929a6edbccdd93ec0bfc571a
             Token = token;
             try
             {
-                await client.Start();
+                //await client.Start();
+                Client.Connect(token);
             }
             catch (Exception)
             {
@@ -253,8 +256,8 @@ namespace Har_reader
             Status = "Connected";
             Is_connected = true;
             //}));
-            client.Send(init_mess);
-            exitEvent.WaitOne();
+            //client.Send(init_mess);
+            //exitEvent.WaitOne();
         }
     }
 }

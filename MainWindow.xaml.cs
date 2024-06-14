@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows;
@@ -12,6 +13,7 @@ namespace Har_reader
     /// </summary>
     public partial class MainWindow : Window
     {
+        SoundPlayer p = new SoundPlayer(Properties.Resources.alert);
         [DllImport("user32")] private static extern int FlashWindow(IntPtr hwnd, bool bInvert);
         WindowInteropHelper wih;
         Timer t;
@@ -29,7 +31,7 @@ namespace Har_reader
         {
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
-                var t = new System.Media.SoundPlayer(Properties.Resources.alert);
+                p.Play();
                 FlashWindow(wih.Handle, true);
             }));
         }
@@ -37,7 +39,7 @@ namespace Har_reader
         {
             if (blink)
             {
-                t.Enabled = true;
+                T_Elapsed(null, null);
                 t.Start();
             }
             else

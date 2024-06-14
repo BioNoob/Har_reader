@@ -285,7 +285,6 @@ namespace Har_reader
             }
         }
 
-
         public CommandHandler DisconnectCommand
         {
             get

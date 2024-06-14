@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" FontFamily="Jura" WindowStyle="None" MouseDown="Window_MouseDown"
-        xmlns:local="clr-namespace:Har_reader"
+        xmlns:local="clr-namespace:Har_reader" KeyDown="Window_KeyDown"
         Title="Har reader" Height="500" MinHeight="300" MinWidth="700" Width="550">
     <Window.Resources>
         <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 

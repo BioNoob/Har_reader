@@ -38,10 +38,10 @@ namespace Har_reader
             {
                 t.Enabled = true;
                 t.Start();
-            }                
+            }
             else
                 t.Stop();
-            
+
         }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -49,6 +49,12 @@ namespace Har_reader
             {
                 DragMove();
             }
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Return)
+                Keyboard.ClearFocus();
         }
     }
 }

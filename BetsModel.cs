@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Har_reader
 {
@@ -30,7 +26,7 @@ namespace Har_reader
             Bet = new Bet();
             BetsEnabled = false;
             Bet.BetVal = 0.1;
-            Bet.CashOut = 0.1;
+            Bet.CashOut = 1;
         }
         public void TimeToBet()
         {
@@ -60,7 +56,10 @@ namespace Har_reader
                             Bet.CashOut += 0.1;
                             break;
                         case "-":
-                            Bet.CashOut -= 0.1;
+                            if (Bet.CashOut <= 1)
+                                Bet.CashOut = 1;
+                            else
+                                Bet.CashOut -= 0.1;
                             break;
                     }
                 },

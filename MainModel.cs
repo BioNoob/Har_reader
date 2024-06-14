@@ -37,7 +37,15 @@ namespace Har_reader
         public string Token { get => token; set => SetProperty(ref token, value); }
         public ObservableCollection<_webSocketMessages> Answer { get => answer; set => SetProperty(ref answer, value); }
         public int Counter_lowers { get => counter_lowers; set => SetProperty(ref counter_lowers, value); }
-        public bool AlertSignalOn { get => alertsignalon; set => SetProperty(ref alertsignalon, value); }
+        public bool AlertSignalOn
+        {
+            get => alertsignalon;
+            set
+            {
+                SetProperty(ref alertsignalon, value);
+                DoAlertBlink?.Invoke(value);
+            }
+        }
         public string Status { get => status; set => SetProperty(ref status, value); }
         public int LowerCheckValue { get => lowerCheckValue; set => SetProperty(ref lowerCheckValue, value); }
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
@@ -61,7 +69,7 @@ namespace Har_reader
             Client = new OdysseyClient();
             Profile = new Profile();
             Profile.Username = "NotConn";
-            Profile.PunkBalance.Punk = 0;
+            Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
         }
@@ -71,24 +79,54 @@ namespace Har_reader
             Client.PlaceBet(tobet);
         }
 
+        private Bet CurrBet = null;
         private void Client_MessageGeted(IncomeMessageType type, _webSocketMessages mess)
         {
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                if (mess != null)
-                    Debug.WriteLine(mess.Type + "\t" + mess.Data);
-            }
             switch (type)
             {
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
+                    Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.game_crash:
+                    //Узнали меньше ли оно требования
+                    mess.GetCrashData.Lower = mess.GetCrashData.Game_crash_normal <= BM.LowerCheckVal;
+                    Answer.Insert(0, mess);
+                    //счетчик, если меньше увеличили на 1, по идее если нет, то скинули в 0
+                    Counter_lowers = mess.GetCrashData.Lower ? Counter_lowers + 1 : 0;
+                    //если досчитали до требования то бьем тревогу, и там еще и ставку по требованию делаем
+                    if (Counter_lowers >= BM.AlertValCounter)
+                    {
+                        if (!AlertSignalOn) AlertSignalOn = true;
+                        if (BM.AutoBetOn)
+                        {
+                            //таким макаром будем плейсить каждый раз пока условие работает
+                            //System.Windows.MessageBox.Show("BET MAY BE PLACED AT REQUEST\n" +
+                            //    $"{BM.Bet.GetRequest}");
+                            Client.PlaceBet(BM.Bet);
+                        }
+                    }
+                    else
+                    {
+                        if (AlertSignalOn) AlertSignalOn = false;
+                    }   
+                    break;
+                case IncomeMessageType.bet_accepted:
+                    CurrBet = new Bet();
+                    CurrBet.BetVal = mess.GetBetAccData.BetVal;
+                    CurrBet.CashOut = mess.GetBetAccData.CashOut;
+                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.tick:
+                    //WIN by AutoCashOut
+                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk + CurrBet.Profit);
+                    Answer.Insert(0, mess);
                     break;
-                case IncomeMessageType.none:
+                case IncomeMessageType.lose:
+                    BM.AutoBetOn = false;
+                    mess.ReviewData = $"Bet {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut {CurrBet.CashOut.ToString(CultureInfo.InvariantCulture)}x";
+                    Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;
@@ -110,22 +148,22 @@ namespace Har_reader
 
         private void Answer_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
-            {
-                if (e.Action == NotifyCollectionChangedAction.Add)
-                {
-                    var crsh_data = (e.NewItems[0] as _webSocketMessages).GetCrashData;
-                    crsh_data.Lower = crsh_data.Game_crash_normal <= BM.LowerCheckVal;
-                    Counter_lowers = crsh_data.Lower ? Counter_lowers + 1 : Counter_lowers;
-                    if (Counter_lowers >= BM.AlertValCounter)
-                        AlertSignalOn = true;
-                    if (!crsh_data.Lower)
-                    {
-                        Counter_lowers = 0;
-                        AlertSignalOn = false;
-                    }
-                }
-            }
+            //if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
+            //{
+            //    if (e.Action == NotifyCollectionChangedAction.Add)
+            //    {
+            //        var crsh_data = (e.NewItems[0] as _webSocketMessages).GetCrashData;
+            //        crsh_data.Lower = crsh_data.Game_crash_normal <= BM.LowerCheckVal;
+            //        Counter_lowers = crsh_data.Lower ? Counter_lowers + 1 : Counter_lowers;
+            //        if (Counter_lowers >= BM.AlertValCounter)
+            //            AlertSignalOn = true;
+            //        if (!crsh_data.Lower)
+            //        {
+            //            Counter_lowers = 0;
+            //            AlertSignalOn = false;
+            //        }
+            //    }
+            //}
             ExpEnabled = Answer.Count > 0 ? true : false;
         }
         public CommandHandler ConnectCommand
@@ -254,6 +292,7 @@ namespace Har_reader
             {
                 return _disconnectCommand ??= new CommandHandler(obj =>
                 {
+                    AlertSignalOn = false;
                     Client.StopClient();
                 },
                 (obj) => true
@@ -263,10 +302,6 @@ namespace Har_reader
 
         public void connect()
         {
-            //https://odyssey.pfplabs.xyz/?token=8a308ac635aa0c626366a3d4b8855f0da128fbe36df18253ac058e6a39cd77ecea99751418853aa9ba4b91675ac81bfc945b429a76ef1a54fc3c25da37b03738&locale=en
-            //https://github.com/Marfusios/websocket-client
-            //0e0f2b0948f426d8ae1242e8cb803615eeae45ed27ac057b8bdaa08350264c81b4a89968ae5a9809d46d9f2984cdd92a97fd6ec1e0e0e9d2b338a2ea2940c6f2
-            //Token = token;
             Is_connected = true;
             try
             {

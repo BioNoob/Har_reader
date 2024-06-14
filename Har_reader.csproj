@@ -7,6 +7,8 @@
     <Company>YASMA corp.</Company>
     <Authors>Yakor</Authors>
     <SignAssembly>false</SignAssembly>
+    <ApplicationIcon>YToken.ico</ApplicationIcon>
+    <StartupObject>Har_reader.App</StartupObject>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -17,14 +19,24 @@
 
   <ItemGroup>
     <None Remove="close.png" />
+    <None Remove="Resources\Chip.png" />
     <None Remove="Resources\csv_exp.png" />
+    <None Remove="Resources\explosion.png" />
+    <None Remove="Resources\lose.png" />
+    <None Remove="Resources\profile.png" />
     <None Remove="Resources\punk-token.png" />
+    <None Remove="Resources\win.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\chip.png" />
     <Resource Include="Resources\close.png" />
     <Resource Include="Resources\csv_exp.png" />
+    <Resource Include="Resources\explosion.png" />
+    <Resource Include="Resources\lose.png" />
+    <Resource Include="Resources\profile.png" />
     <Resource Include="Resources\punk-token.png" />
+    <Resource Include="Resources\win.png" />
   </ItemGroup>
 
   <ItemGroup>

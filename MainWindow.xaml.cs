@@ -12,7 +12,7 @@ namespace Har_reader
     /// </summary>
     public partial class MainWindow : Window
     {
-        [DllImport("user32")] public static extern int FlashWindow(IntPtr hwnd, bool bInvert);
+        [DllImport("user32")] private static extern int FlashWindow(IntPtr hwnd, bool bInvert);
         WindowInteropHelper wih;
         Timer t;
         public MainWindow()
@@ -43,7 +43,7 @@ namespace Har_reader
                 t.Stop();
             
         }
-        private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
             {

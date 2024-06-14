@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" FontFamily="Jura" WindowStyle="None" MouseDown="Window_MouseDown"
         xmlns:local="clr-namespace:Har_reader"
-        Title="Har reader" Height="500" MinHeight="300" MinWidth="550" Width="550">
+        Title="Har reader" Height="500" MinHeight="300" MinWidth="700" Width="550">
     <Window.Resources>
         <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 
                          AutoReverse="True" RepeatBehavior="Forever"/>
@@ -47,7 +47,7 @@
                 </Grid.ColumnDefinitions>
                 <Label Content="{Binding Profile.Username}" Grid.Column="0" MinWidth="70" Margin="0,0,5,0" HorizontalContentAlignment="Left"/>
                 <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
-                <Label Content="{Binding Profile.PunkBalance.Punk}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
+                <Label Content="{Binding Profile.Balance.NormalPunk}" ContentStringFormat="{}{0:#0.00}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
             </Grid>
             <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1" x:Name="BetCntrl" DataContext="{Binding BM}"
                               VerticalAlignment="Top"/>
@@ -111,16 +111,24 @@
                     TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"
                            Text="{Binding Status}" VerticalAlignment="Center"/>
             </Grid>
-            <DataGrid SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
-            Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray">
+            <DataGrid MinWidth="360" SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
+            Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False"
+                      VerticalScrollBarVisibility="Visible" HorizontalGridLinesBrush="DarkGray">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" Width="0.6*" />
-                    <DataGridTextColumn Header="Значение" Binding="{Binding GetCrashData.Game_crash_normal, Mode=OneTime}" Width="0.3*" />
+                    <DataGridTemplateColumn Header="Тип" Width="25" MinWidth="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Image Source="{Binding ImgPath, Mode=OneTime}" Width="15" Height="15" Margin="2"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" MinWidth="145" />
+                    <DataGridTextColumn Header="Значение" Binding="{Binding ReviewData, Mode=OneTime}" MinWidth="155" Width="*"/>
                 </DataGrid.Columns>
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding GetCrashData.Lower}" Value="true">
+                            <DataTrigger Binding="{Binding GetCrashData.Lower, UpdateSourceTrigger=PropertyChanged}" Value="true">
                                 <Setter Property="Background" Value="#CFF30021"></Setter>
                             </DataTrigger>
                         </Style.Triggers>

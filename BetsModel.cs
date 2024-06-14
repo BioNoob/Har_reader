@@ -11,22 +11,43 @@ namespace Har_reader
         private CommandHandler _cahngeautocashCommand;
         private CommandHandler _cahngebetvalCommand;
         private CommandHandler _cahngealertvalCommand;
+        private CommandHandler _forcebetCommand;
         private bool autoBetOn;
         private Bet bet;
         private int alertVal;
         private double lowerCheckVal;
+        private bool betsEnabled;
 
+        public delegate void ReqBet(Bet tobet);
+        public event ReqBet OnReqBet;
         public bool AutoBetOn { get => autoBetOn; set => SetProperty(ref autoBetOn, value); }
         public Bet Bet { get => bet; set => SetProperty(ref bet, value); }
-        public int AlertVal { get => alertVal; set => SetProperty(ref alertVal, value); }
-        public double LowerCheckVal { get => lowerCheckVal; set => SetProperty(ref lowerCheckVal, value); }
+        public int AlertValCounter { get => alertVal; set => SetProperty(ref alertVal, value); }
+        public double LowerCheckVal { get => lowerCheckVal; set => SetProperty(ref lowerCheckVal, Math.Round(value, 2)); }
+        public bool BetsEnabled { get => betsEnabled; set => SetProperty(ref betsEnabled, value); }
         public BetsModel()
         {
-            Bet = new Bet(); 
+            Bet = new Bet();
+            BetsEnabled = false;
             Bet.BetVal = 0.1;
             Bet.CashOut = 0.1;
         }
-
+        public void TimeToBet()
+        {
+            OnReqBet?.Invoke(Bet);
+        }
+        public CommandHandler ForceBetCommand
+        {
+            get
+            {
+                return _forcebetCommand ??= new CommandHandler(obj =>
+                {
+                    OnReqBet?.Invoke(Bet);
+                },
+                obj => true
+                );
+            }
+        }
         public CommandHandler ChangeAutoCasheVal
         {
             get
@@ -47,7 +68,6 @@ namespace Har_reader
                 );
             }
         }
-
         public CommandHandler ChangeBetVal
         {
             get
@@ -68,8 +88,6 @@ namespace Har_reader
                 );
             }
         }
-
-
         public CommandHandler ChangeAlertVal
         {
             get
@@ -79,10 +97,10 @@ namespace Har_reader
                     switch (obj as string)//parametr;
                     {
                         case "+":
-                            AlertVal += 1;
+                            AlertValCounter += 1;
                             break;
                         case "-":
-                            AlertVal -= 1;
+                            AlertValCounter -= 1;
                             break;
                     }
                 },

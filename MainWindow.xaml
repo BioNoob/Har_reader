@@ -7,7 +7,8 @@
         xmlns:local="clr-namespace:Har_reader"
         Title="Har reader" Height="500" MinHeight="300" MinWidth="550" Width="550">
     <Window.Resources>
-        <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:2" RepeatBehavior="3x"/>
+        <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 
+                         AutoReverse="True" RepeatBehavior="Forever"/>
     </Window.Resources>
     <Window.DataContext>
         <local:MainModel/>
@@ -44,11 +45,12 @@
                     <ColumnDefinition Width="25"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Label Content="{Binding }" Grid.Column="0"/>
+                <Label Content="{Binding Profile.Username}" Grid.Column="0" MinWidth="70" Margin="0,0,5,0" HorizontalContentAlignment="Left"/>
                 <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
-                <Label Content="{Binding }" Grid.Column="2"/>
+                <Label Content="{Binding Profile.PunkBalance.Punk}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
             </Grid>
-            <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1"/>
+            <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1" x:Name="BetCntrl" DataContext="{Binding BM}"
+                              VerticalAlignment="Top"/>
             <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>
@@ -73,7 +75,7 @@
                         </Style>
                     </Button.Style>
                 </Button>
-                <Button Grid.Column="2" Height="20" Content="DisConnect" Width="70" HorizontalAlignment="Left" x:Name="DropConnectBtn" Command="{Binding DisconnectCommand}">
+                <Button Grid.Column="2" Height="20" Content="DisConnect" Width="75" HorizontalAlignment="Left" x:Name="DropConnectBtn" Command="{Binding DisconnectCommand}">
                     <Button.Style>
                         <Style TargetType="Button">
                             <Style.Triggers>
@@ -103,61 +105,64 @@
                     </Style>
                 </Button.Style>
             </Button>-->
-                <Label Grid.Row="1" Height="20" Content="Status:" Margin="0,10,0,0" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Right"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="FilePath" HorizontalAlignment="Center"
-                    TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Text="{Binding Status}"/>
-                <Button Grid.Row="1" Grid.Column="2" x:Name="csvexp" Height="20" Content="Export csv" Width="70" Command="{Binding SaveCsvCommand}" HorizontalAlignment="Left" VerticalAlignment="Bottom">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Counter}" Value="0">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
+                <Label Grid.Row="1" Height="20" Content="Status:" Padding="0" VerticalContentAlignment="Center" 
+                       HorizontalContentAlignment="Right" Margin="0,5,0,0"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="FilePath" HorizontalAlignment="Center" 
+                    TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"
+                           Text="{Binding Status}" VerticalAlignment="Center"/>
             </Grid>
             <DataGrid SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
             Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" HorizontalGridLinesBrush="DarkGray">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" Width="0.5*" />
-                    <DataGridTextColumn Header="Значение" Binding="{Binding GetData.Game_crash_normal, Mode=OneTime}" Width="0.5*" />
+                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" Width="0.6*" />
+                    <DataGridTextColumn Header="Значение" Binding="{Binding GetCrashData.Game_crash_normal, Mode=OneTime}" Width="0.3*" />
                 </DataGrid.Columns>
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding GetData.Lower}" Value="true">
+                            <DataTrigger Binding="{Binding GetCrashData.Lower}" Value="true">
                                 <Setter Property="Background" Value="#CFF30021"></Setter>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
             </DataGrid>
-            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5" HorizontalAlignment="Right">
+            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Label Content="Count of rec:" VerticalAlignment="Bottom" HorizontalAlignment="Right" 
-                   Grid.Column="0" Padding="0" Margin="0,5,5,0"/>
-                <TextBlock x:Name="Counter" Text="{Binding Counter}" VerticalAlignment="Bottom" 
-                       HorizontalAlignment="Right" Padding="0" Margin="0,5,0,0" Grid.Column="1"/>
+                <Button Grid.Column="0" x:Name="csvexp" Height="25" Width="25" Command="{Binding SaveCsvCommand}" 
+                        HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                        IsEnabled="{Binding ExpEnabled}">
+                    <Image Source="Resources/csv_exp.png"/>
+                </Button>
+                <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <Label Content="Count of rec:" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                    Padding="0"/>
+                    <TextBlock x:Name="Counter" Text="{Binding Answer.Count}" VerticalAlignment="Center"
+                       HorizontalAlignment="Right" Padding="0" Grid.Column="2" Margin="5,0"/>
+                </StackPanel>
             </Grid>
-            <Label Grid.Column="2" HorizontalAlignment="Center" Content="ALERT!" FontSize="16"
-                    Foreground="Yellow" VerticalAlignment="Bottom" Grid.Row="3"
-                    Background="Red" Padding="25,0" Opacity="1" Margin="0,5">
+            <Label Grid.Column="3" HorizontalAlignment="Left" Content="ALERT ! ! ! !" FontSize="16"
+                    Foreground="Yellow" VerticalAlignment="Center" Grid.Row="3"
+                    Background="Red" Padding="25,0" Opacity="0" Margin="10,5">
                 <Label.Style>
                     <Style TargetType="Label">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding AlertSignalOn}" Value="true">
                                 <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
+                                    <BeginStoryboard Name="AlertStoryBoard">
                                         <Storyboard>
                                             <StaticResource ResourceKey="AlertAnim"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="AlertStoryBoard"/>
+                                </DataTrigger.ExitActions>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>

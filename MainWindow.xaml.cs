@@ -20,7 +20,7 @@ namespace Har_reader
             InitializeComponent();
             wih = new WindowInteropHelper(this);
             (this.DataContext as MainModel).DoAlertBlink += MainWindow_DoAlertBlink;
-            t = new Timer(1000);
+            t = new Timer(2000);
             t.AutoReset = true;
             t.Elapsed += T_Elapsed;
         }
@@ -29,6 +29,7 @@ namespace Har_reader
         {
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
+                var t = new System.Media.SoundPlayer(Properties.Resources.alert);
                 FlashWindow(wih.Handle, true);
             }));
         }

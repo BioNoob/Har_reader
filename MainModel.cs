@@ -130,12 +130,12 @@ namespace Har_reader
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + CurrBet.Profit);
-                    mess.ReviewData = $"Win Bet {CurrBet.Profit.ToString(CultureInfo.InvariantCulture)}";
+                    mess.ReviewData = $"Win {CurrBet.Profit.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
                     BM.AutoBetOn = false;
-                    mess.ReviewData = $"Lose Bet {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
+                    mess.ReviewData = $"Lose {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.connected:

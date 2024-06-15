@@ -47,7 +47,7 @@
                 </Grid.ColumnDefinitions>
                 <Label Content="{Binding Profile.Username}" Grid.Column="0" MinWidth="70" Margin="0,0,5,0" HorizontalContentAlignment="Left"/>
                 <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
-                <Label Content="{Binding Profile.Balance.NormalPunk}" ContentStringFormat="{}{0:#0.00}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
+                <Label Content="{Binding Profile.Balance.NormalPunk}" ContentStringFormat="{}{0:#0.000}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
             </Grid>
             <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1" x:Name="BetCntrl" DataContext="{Binding BM}"
                               VerticalAlignment="Top"/>
@@ -107,8 +107,8 @@
             </Button>-->
                 <Label Grid.Row="1" Height="20" Content="Status:" Padding="0" VerticalContentAlignment="Center" 
                        HorizontalContentAlignment="Right" Margin="0,5,0,0"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="FilePath" HorizontalAlignment="Center" 
-                    TextWrapping="WrapWithOverflow" TextAlignment="Left" TextTrimming="CharacterEllipsis" Margin="0,5,0,0"
+                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="FilePath" HorizontalAlignment="Stretch" 
+                    TextWrapping="WrapWithOverflow" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="5,5,0,0"
                            Text="{Binding Status}" VerticalAlignment="Center"/>
             </Grid>
             <DataGrid MinWidth="360" SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
@@ -131,6 +131,36 @@
                             <DataTrigger Binding="{Binding GetCrashData.Lower, UpdateSourceTrigger=PropertyChanged}" Value="true">
                                 <Setter Property="Background" Value="#CFF30021"></Setter>
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding ImgPath}" Value="Resources/win.png">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush SpreadMethod="Pad" StartPoint="0,0" EndPoint="0,0.7">
+                                            <GradientStop Color="Transparent" Offset="0.1"/>
+                                            <GradientStop Color="#01B946" Offset="1.5"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ImgPath}" Value="Resources/lose.png">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush SpreadMethod="Pad" StartPoint="0,0" EndPoint="0,0.7">
+                                            <GradientStop Color="Transparent" Offset="0.1"/>
+                                            <GradientStop Color="#FF2E02" Offset="1.5"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding ImgPath}" Value="Resources/chip.png">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush SpreadMethod="Pad" StartPoint="0,0" EndPoint="0,0.7">
+                                            <GradientStop Color="Transparent" Offset="0.1"/>
+                                            <GradientStop Color="#FFDE02" Offset="1.5"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </DataGrid.RowStyle>
@@ -142,23 +172,29 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" x:Name="csvexp" Height="25" Width="25" Command="{Binding SaveCsvCommand}" 
-                        HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
                         Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                         IsEnabled="{Binding ExpEnabled}">
                     <Image Source="Resources/csv_exp.png"/>
                 </Button>
+                <TextBox Opacity="0" Margin="30,0,0,0" x:Name="Satas"/>
                 <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                    <Label Content="Count of rec:" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                    <Label Content="Count of crash:" VerticalAlignment="Center" HorizontalAlignment="Right" 
                     Padding="0"/>
                     <TextBlock x:Name="Counter" Text="{Binding Answer.Count}" VerticalAlignment="Center"
                        HorizontalAlignment="Right" Padding="0" Grid.Column="2" Margin="5,0"/>
                 </StackPanel>
             </Grid>
-            <Label Grid.Column="3" HorizontalAlignment="Left" Content="ALERT ! ! ! !" FontSize="16"
-                    Foreground="Yellow" VerticalAlignment="Center" Grid.Row="3"
-                    Background="Red" Padding="25,0" Opacity="0" Margin="10,5">
-                <Label.Style>
-                    <Style TargetType="Label">
+            <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="3" Opacity="0">
+                <Label HorizontalAlignment="Left" Content="ALERT ! ! ! !" FontSize="16"
+                    Foreground="Yellow" VerticalAlignment="Center" 
+                    Background="Red" Padding="25,0" Margin="10,5">
+                </Label>
+                <Button Width="25" Height="25" Padding="0" Background="Transparent" BorderThickness="0" Click="Button_Click">
+                    <Image Source="Resources\mute.png"/>
+                </Button>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding AlertSignalOn}" Value="true">
                                 <DataTrigger.EnterActions>
@@ -174,8 +210,9 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Label.Style>
-            </Label>
+                </StackPanel.Style>
+            </StackPanel>
+
         </Grid>
     </DockPanel>
 </Window>

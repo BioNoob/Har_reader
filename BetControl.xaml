@@ -28,7 +28,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Label Content="Enabled AutoBet" HorizontalAlignment="Right" Margin="0,0,10,0"/>
+        <Label Content="Enabled AutoBet" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
         <ToggleButton Height="20" Grid.Column="1" Width="40" HorizontalAlignment="Left" IsChecked="{Binding AutoBetOn}"
                       IsEnabled="{Binding BetsEnabled}">
             <ToggleButton.Style>
@@ -44,7 +44,10 @@
                 </Style>
             </ToggleButton.Style>
         </ToggleButton>
-        <Label Grid.Row="1" Grid.Column="0" Content="Check if lower then" Margin="0,10,10,0" HorizontalAlignment="Right">
+        <Label Grid.Column="1" Content="DON'T TOUCH THIS" Foreground="Black" Margin="10,0,0,0" FontSize="16" FontFamily="Impact"/>
+        <Label Grid.Column="1" Content="DON'T TOUCH THIS" Foreground="#BFFF0000" Margin="12,0,0,0" FontSize="16" FontFamily="Impact"/>
+
+        <Label Grid.Row="1" Grid.Column="0" Content="Check if lower then" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Label.ToolTip>
                 <ToolTip Content="Value to count like a lower border value"/>
             </Label.ToolTip>
@@ -54,7 +57,7 @@
                 <ToolTip Content="Value to count like a lower border value"/>
             </TextBox.ToolTip>
         </TextBox>
-        <Label Grid.Row="2" Grid.Column="0" Content="AutoBet/Alert from" Margin="0,10,10,0" HorizontalAlignment="Right">
+        <Label Grid.Row="2" Grid.Column="0" Content="AutoBet/Alert from" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Label.ToolTip>
                 <ToolTip Content="Count of lower checks for Alert or AutoBet"/>
             </Label.ToolTip>
@@ -73,7 +76,7 @@
             </TextBlock>
             <Button Width="25" Grid.Column="2" Content="+" Command="{Binding ChangeAlertVal}" CommandParameter="+"/>
         </Grid>
-        <Label Grid.Row="3" Grid.Column="0" Content="Bet Value" Margin="0,10,10,0" HorizontalAlignment="Right"/>
+        <Label Grid.Row="3" Grid.Column="0" Content="Bet Value" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
@@ -84,7 +87,7 @@
             <TextBox PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged" Text="{Binding Bet.BetVal, UpdateSourceTrigger=LostFocus}" Grid.Column="1" Margin="10,0" VerticalContentAlignment="Center"/>
             <Button Width="25" Grid.Column="0" Content="/2" Command="{Binding ChangeBetVal}" CommandParameter="-"/>
         </Grid>
-        <Label Grid.Row="4" Grid.Column="0" Content="Auto CashOut value" Margin="0,10,10,0" HorizontalAlignment="Right">
+        <Label Grid.Row="4" Grid.Column="0" Content="Auto CashOut value" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Label.ToolTip>
                 <ToolTip>
                     <StackPanel Orientation="Horizontal">

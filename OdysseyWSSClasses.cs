@@ -1,216 +1,15 @@
 ﻿using CsvHelper.Configuration;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net.WebSockets;
-using System.Reactive.Concurrency;
-using System.Reactive.Linq;
-using System.Threading;
-using Websocket.Client;
-using System.Timers;
-using Timer = System.Timers.Timer;
-using System.Threading.Tasks;
 using System.Linq;
 
 namespace Har_reader
 {
-    internal static class Converter
-    {
-        public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-        {
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
-            Converters =
-            {
-                new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-            },
-        };
-    }
-    public enum IncomeMessageType
-    {
-        initial_data,
-        game_crash,
-        tick,
-        bet_accepted,
-        lose,
-        none,
-        connected,
-        disconnected
-    }
-    public class OdysseyClient : Proper
-    {
-        private Timer _timer = new Timer(1000);
-        private ManualResetEvent exitEvent = new ManualResetEvent(false);
-        private WebsocketClient client = new WebsocketClient(new Uri("wss://ton-rocket-server.pfplabs.xyz/"));
-        private const string _init_mess = "{\"type\":\"join\",\"data\":{\"initData\":\"\",\"browserInitData\":{\"token\":\"" + "ECHO" + "\",\"locale\":\"en\"}}}";
-        private string init_mess = "";
-        private static readonly object GATE1 = new object();
-        private int counter_of_sec = 0;
-        private string MyUserName;
-        private bool gameInProgress;
-        private List<string> PresetStatusBet = new List<string> { "Game in progress", "Game in progress.", "Game in progress..", "Game in progress...", "Game in progress...." };
-        private List<string> PresetStatusConn = new List<string> { "Connecting", "Connecting.", "Connecting..", "Connecting...", "Connecting...." };
-        private bool haveActiveBet;
-        private bool authDone;
 
-        public bool GameInProgress { get => gameInProgress; set => SetProperty(ref gameInProgress, value); }
-        public bool HaveActiveBet { get => haveActiveBet; set => SetProperty(ref haveActiveBet, value); }
-        private bool AuthDone { get => authDone; set => SetProperty(ref authDone, value); }
-        public OdysseyClient()
-        {
-            _timer.Elapsed += _timer_Elapsed;
-            _timer.AutoReset = true;
-            GameInProgress = true;
-            HaveActiveBet = false;
-            AuthDone = false;
-            client.ReconnectionHappened.Subscribe(info => client.Send(init_mess));
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"initial_data\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(ConnMessageRecived);
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"game_crash\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(CrashMessageRecived);
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"game_starting\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(t => GameInProgress = false);
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"tick\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(MyCashOutMsgRecived);
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"game_started\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(t => GameInProgress = true);
-            client.MessageReceived
-                .Where(t => !string.IsNullOrEmpty(t.Text))
-                .Where(t => t.Text.Contains("\"type\":\"bet_accepted\""))
-                .ObserveOn(TaskPoolScheduler.Default)
-                .Synchronize(GATE1)
-                .Subscribe(BetAccMsgRecived);
-        }
-
-        private async void _timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            if (counter_of_sec > 5)
-            {
-                counter_of_sec = 0;
-                _timer.Stop();
-                StatusChanged?.Invoke("Conn TO, check token");
-                MessageGeted?.Invoke(IncomeMessageType.disconnected, null);
-                await Task.Delay(2000);
-                StopClient();
-            }
-            else
-            {
-                if (counter_of_sec > PresetStatusConn.Count - 1)
-                    StatusChanged?.Invoke(PresetStatusConn[0]);
-                else
-                    StatusChanged?.Invoke(PresetStatusConn[counter_of_sec]);
-                counter_of_sec++;
-
-            }
-        }
-
-        public delegate void SendStatus(string txt);
-        public event SendStatus StatusChanged;
-        public delegate void GetedMessage(IncomeMessageType type, _webSocketMessages mess);
-        public event GetedMessage MessageGeted;
-        private void ConnMessageRecived(ResponseMessage msg)
-        {
-            if (!AuthDone)
-            {
-                _timer.Stop();
-                StatusChanged?.Invoke("Connected");
-                MessageGeted?.Invoke(IncomeMessageType.connected, null);
-                var xz = _webSocketMessages.FromJson(msg.Text);
-                MessageGeted?.Invoke(IncomeMessageType.initial_data, xz);
-                MyUserName = xz.GetProfileData.Username;
-                AuthDone = true;
-            }
-        }
-        private void MyCashOutMsgRecived(ResponseMessage msg)
-        {
-            if (!string.IsNullOrEmpty(MyUserName))
-                if (msg.Text.Contains(MyUserName))
-                {
-                    HaveActiveBet = false;
-                    var xz = _webSocketMessages.FromJson(msg.Text);
-                    xz.GetTickdData.MyCashOut = xz.GetTickdData.CashOutsLst.Single(t => t.Id == MyUserName);
-                    MessageGeted?.Invoke(IncomeMessageType.tick, xz);
-                }
-
-        }
-        private void BetAccMsgRecived(ResponseMessage msg)
-        {
-            HaveActiveBet = true;
-            StatusChanged?.Invoke("BET placed");
-            MessageGeted?.Invoke(IncomeMessageType.bet_accepted, _webSocketMessages.FromJson(msg.Text));
-        }
-        private void CrashMessageRecived(ResponseMessage msg)
-        {
-            MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text));
-            if (HaveActiveBet)
-            {
-                var xz = new _webSocketMessages();
-                xz.HandSetData("lose");
-                MessageGeted?.Invoke(IncomeMessageType.lose, xz);
-            }
-
-        }
-        public async void Connect(string token)
-        {
-            StatusChanged?.Invoke("Try Connect");
-            init_mess = _init_mess.Replace("ECHO", token);
-            _timer.Start();
-            await client.Start();
-            client.Send(init_mess);
-            exitEvent.WaitOne();
-        }
-        public async void PlaceBet(Bet bet)
-        {
-            StatusChanged?.Invoke("Try place a bet");
-            int a = 0;
-            while (GameInProgress)
-            {
-                StatusChanged?.Invoke(PresetStatusBet[a++]);
-                if (a > PresetStatusBet.Count) a = 0;
-                await Task.Delay(500);
-            }
-            if (!client.Send(bet.GetRequest))
-                StatusChanged?.Invoke("Error place bet");
-        }
-        public void StopClient()
-        {
-            if (client.IsStarted)
-            {
-                AuthDone = false;
-                HaveActiveBet = false;
-                GameInProgress = false;
-                MyUserName = string.Empty;
-                StatusChanged?.Invoke("Disconnected");
-                MessageGeted?.Invoke(IncomeMessageType.disconnected, null);
-                exitEvent.Set();
-                client.Stop(WebSocketCloseStatus.Empty, string.Empty);
-            }
-        }
-    }
     public class Message : Proper
     {
     }
@@ -218,6 +17,8 @@ namespace Har_reader
     {
         private double bets;
         private double cashOut;
+        private int jAmount;
+        private int jCash;
 
         public Bet() { }
         public Bet(double bet, double cash_out)
@@ -225,6 +26,11 @@ namespace Har_reader
             BetVal = bet;
             CashOut = cash_out;
         }
+        [JsonProperty("amount")]
+        public int JAmount { get => jAmount; set { jAmount = value; BetVal = value / 1000000000d; } }
+        [JsonProperty("autoCashOut")]
+        public int JCash { get => jCash; set { jCash = value; CashOut = value / 100d; } }
+        [JsonIgnore]
         public double BetVal
         {
             get => bets; set
@@ -234,6 +40,7 @@ namespace Har_reader
                 SetProperty(ref bets, Math.Round(value, 2));
             }
         }
+        [JsonIgnore]
         public double CashOut
         {
             get => cashOut;
@@ -245,10 +52,10 @@ namespace Har_reader
             }
         }
         public double Profit => Math.Round(BetVal * CashOut, 3);
-        private double _truebet => BetVal * 100000000; //0.1 = 100000000
-        private double _truecashout => CashOut * 100;
+        private int _truebet => (int)(BetVal * 1000000000); //0.1 = 1000000000
+        private int _truecashout => (int)(CashOut * 100);
         public string GetRequest => "{\"type\":\"place_bet\",\"data\":{\"amount\":" +
-            $"{_truebet},\"autoCashOut\":{_truecashout}}}";
+            $"{_truebet},\"autoCashOut\":{_truecashout}" + "}}";
     }
     public class game_crash_mess : Message
     {
@@ -266,13 +73,14 @@ namespace Har_reader
     {
         private double punk;
         private double ton;
-
+        private double normalpunk;
         [JsonProperty("punk")]
-        public double Punk { get => punk; set => SetProperty(ref punk, value); }
+        public double Punk { get => punk; set { SetProperty(ref punk, value); NormalPunk = Punk / 1000000000; } }//Math.Round(Punk / 1000000000, 2, MidpointRounding.ToNegativeInfinity); } }
 
         [JsonProperty("ton")]
         public double Ton { get => ton; set => SetProperty(ref ton, value); }
-        public double NormalPunk => Math.Round(Punk / 1000000000, 2,MidpointRounding.ToNegativeInfinity);
+        public double NormalPunk { get => normalpunk; set => SetProperty(ref normalpunk, value); }
+        //=> Math.Round(Punk / 1000000000, 2, MidpointRounding.ToNegativeInfinity);
         public void SetPunk(double val)
         {
             Punk = val * 1000000000;
@@ -301,20 +109,29 @@ namespace Har_reader
     public class CashOuts : Proper
     {
         private double val;
-        private string id;
+        private int id;
 
-        public string Id { get => id; set => SetProperty(ref id, value); }
+        public int Id { get => id; set => SetProperty(ref id, value); }
         public double Value { get => val; set => SetProperty(ref val, value); }
+        public double NValue => Value / 100;
     }
     public class TickMess : Message
     {
-        private List<CashOuts> cashOutsLst;
+        //private List<CashOuts> cashOutsLst;
         private CashOuts myCashOut;
 
-        [JsonProperty("cashouts")]
-        public List<CashOuts> CashOutsLst { get => cashOutsLst; set => SetProperty(ref cashOutsLst, value); }
-        [JsonIgnore]
+        //[JsonProperty("cashouts")]
+        //public List<CashOuts> CashOutsLst { get => cashOutsLst; set => SetProperty(ref cashOutsLst, value); }
+        //[JsonIgnore]
         public CashOuts MyCashOut { get => myCashOut; set => SetProperty(ref myCashOut, value); }
+    }
+    public class History_record_crash
+    {
+        [JsonProperty("game_id")]
+        public int game_id { get; set; }
+        [JsonProperty ("game_crash")]
+        public int game_crash { get; set; }
+        public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}");
     }
     public class _webSocketMessages : Message
     {
@@ -332,7 +149,7 @@ namespace Har_reader
         public string Type { get => type; set => SetProperty(ref type, value); }
         public double Time { get => time; set => SetProperty(ref time, value); }
         public string ImgPath { get => imgPath; set => SetProperty(ref imgPath, value); }
-        public string ReviewData { get => reviewData; set => SetProperty(ref reviewData, value); } 
+        public string ReviewData { get => reviewData; set => SetProperty(ref reviewData, value); }
         public _webSocketMessages()
         {
             GetCrashData = null;
@@ -341,14 +158,14 @@ namespace Har_reader
             GetBetAccData = null;
             Time = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
-        public static _webSocketMessages FromJson(string json)
+        public static _webSocketMessages FromJson(string json, object dop_info = null)
         {
             JObject o = JObject.Parse(json);
             var m = new _webSocketMessages() { Type = o.SelectToken("type").ToString(), Data = o.SelectToken("data").ToString(), Time = DateTimeOffset.Now.ToUnixTimeSeconds() };
-            m.SetData();
+            m.SetData(dop_info);
             return m;
         }
-        private IncomeMessageType MsgType
+        public IncomeMessageType MsgType
         {
             get
             {
@@ -384,13 +201,13 @@ namespace Har_reader
             Type = type;
             SetData();
         }
-        private void SetData()
+        private void SetData(object dop_info = null)
         {
             switch (MsgType)
             {
                 case IncomeMessageType.initial_data:
                     GetProfileData = JsonConvert.DeserializeObject<Profile>(JObject.Parse(Data).SelectToken("user").ToString());
-                    ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.00",CultureInfo.InvariantCulture)}";
+                    ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.00", CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/profile.png";
                     break;
                 case IncomeMessageType.game_crash:
@@ -399,8 +216,19 @@ namespace Har_reader
                     ImgPath = "Resources/explosion.png";
                     break;
                 case IncomeMessageType.tick:
-                    GetTickdData = JsonConvert.DeserializeObject<TickMess>(JObject.Parse(Data).ToString());
-                    ReviewData = $"{GetTickdData.MyCashOut.Value.ToString(CultureInfo.InvariantCulture)}";
+                    var t = JObject.Parse(Data);
+                    GetTickdData = new TickMess();
+                    if (t.SelectToken("cashouts") is JObject)
+                    {
+                        CashOuts w = JsonConvert.DeserializeObject<CashOuts>(t.SelectToken("cashouts").ToString());
+                        GetTickdData.MyCashOut = w;
+                    }
+                    else if (t.SelectToken("cashouts") is JArray)
+                    {
+                        List<CashOuts> wl = JsonConvert.DeserializeObject<List<CashOuts>>(t.SelectToken("cashouts").ToString());
+                        if (dop_info is int @int)
+                            GetTickdData.MyCashOut = wl.Single(q => q.Id == @int);
+                    }
                     ImgPath = "Resources/win.png";
                     break;
                 case IncomeMessageType.bet_accepted:

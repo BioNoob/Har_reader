@@ -7,6 +7,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
@@ -31,6 +32,8 @@ namespace Har_reader
         private Profile profile;
         private BetsModel bM;
         private bool expEnabled;
+        private Bet CurrBet = null;
+        private int crashCount;
 
         public OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
         public Profile Profile { get => profile; set => SetProperty(ref profile, value); }
@@ -53,6 +56,7 @@ namespace Har_reader
         public event AlertBlink DoAlertBlink;
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
+        public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
 
         public MainModel()
         {
@@ -79,7 +83,8 @@ namespace Har_reader
             Client.PlaceBet(tobet);
         }
 
-        private Bet CurrBet = null;
+
+
         private void Client_MessageGeted(IncomeMessageType type, _webSocketMessages mess)
         {
             switch (type)
@@ -89,6 +94,8 @@ namespace Har_reader
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.game_crash:
+                    if (!BM.BetsEnabled)
+                        BM.BetsEnabled = true;
                     //Узнали меньше ли оно требования
                     mess.GetCrashData.Lower = mess.GetCrashData.Game_crash_normal <= BM.LowerCheckVal;
                     Answer.Insert(0, mess);
@@ -109,28 +116,31 @@ namespace Har_reader
                     else
                     {
                         if (AlertSignalOn) AlertSignalOn = false;
-                    }   
+                    }
                     break;
                 case IncomeMessageType.bet_accepted:
                     CurrBet = new Bet();
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
+                    //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.tick:
                     //WIN by AutoCashOut
+                    //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + CurrBet.Profit);
+                    mess.ReviewData = $"Win Bet {CurrBet.Profit.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
                     BM.AutoBetOn = false;
-                    mess.ReviewData = $"Bet {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut {CurrBet.CashOut.ToString(CultureInfo.InvariantCulture)}x";
+                    mess.ReviewData = $"Lose Bet {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;
-                    BM.BetsEnabled = true;
+                    //BM.BetsEnabled = true;
                     break;
                 case IncomeMessageType.disconnected:
                     Is_connected = false;
@@ -164,7 +174,8 @@ namespace Har_reader
             //        }
             //    }
             //}
-            ExpEnabled = Answer.Count > 0 ? true : false;
+            CrashCount = Answer.Where(t => t.MsgType == IncomeMessageType.game_crash).Count();
+            ExpEnabled = CrashCount > 0 ? true : false;
         }
         public CommandHandler ConnectCommand
         {
@@ -271,7 +282,7 @@ namespace Har_reader
                             new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" }))
                         {
                             csv.Context.RegisterClassMap<FooMap>();
-                            csv.WriteRecords(Answer);
+                            csv.WriteRecords(Answer.Where(t=>t.MsgType == IncomeMessageType.game_crash));
                         }
                         ProcessStartInfo psi = new ProcessStartInfo();
                         psi.FileName = sfd.FileName;
@@ -292,6 +303,7 @@ namespace Har_reader
                 return _disconnectCommand ??= new CommandHandler(obj =>
                 {
                     AlertSignalOn = false;
+                    Counter_lowers = 0;
                     Client.StopClient();
                 },
                 (obj) => true

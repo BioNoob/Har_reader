@@ -26,12 +26,20 @@ namespace Har_reader
             t.AutoReset = true;
             t.Elapsed += T_Elapsed;
         }
-
+        private bool muted = false;
+        private int count_alert = 0;
         private void T_Elapsed(object sender, ElapsedEventArgs e)
         {
             Application.Current.Dispatcher.Invoke(new Action(() =>
             {
-                p.Play();
+                if (!muted)
+                {
+                    if(count_alert != 2)
+                    {
+                        p.Play();
+                        count_alert++;
+                    }
+                }
                 FlashWindow(wih.Handle, true);
             }));
         }
@@ -40,10 +48,14 @@ namespace Har_reader
             if (blink)
             {
                 T_Elapsed(null, null);
+                muted = false;
                 t.Start();
             }
             else
+            {
                 t.Stop();
+                count_alert = 0;
+            }
 
         }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -57,7 +69,19 @@ namespace Har_reader
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter || e.Key == Key.Return)
-                Keyboard.ClearFocus();
+                //Keyboard.ClearFocus();
+                Satas.Focus();
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (muted)
+                muted = false;
+            else
+            {
+                p.Stop();
+                muted = true;
+            }
         }
     }
 }

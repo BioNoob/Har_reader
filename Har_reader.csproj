@@ -28,6 +28,7 @@
     <None Remove="Resources\explosion.png" />
     <None Remove="Resources\lose.png" />
     <None Remove="Resources\mute.png" />
+    <None Remove="Resources\odyseeyproj-4a113e813b35.json" />
     <None Remove="Resources\profile.png" />
     <None Remove="Resources\punk-token.png" />
     <None Remove="Resources\win.png" />
@@ -35,6 +36,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\alert.wav" />
+    <EmbeddedResource Include="Resources\odyseeyproj-4a113e813b35.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +53,7 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="32.0.3" />
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.68.0.3421" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Websocket.Client" Version="5.1.1" />
   </ItemGroup>

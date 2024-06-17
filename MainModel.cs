@@ -35,7 +35,8 @@ namespace Har_reader
         private Bet CurrBet = null;
         private int crashCount;
 
-        public OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
+        private OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
+        private GoogleApi gp { get; set; }
         public Profile Profile { get => profile; set => SetProperty(ref profile, value); }
         public string Token { get => token; set => SetProperty(ref token, value); }
         public ObservableCollection<_webSocketMessages> Answer { get => answer; set => SetProperty(ref answer, value); }
@@ -71,11 +72,18 @@ namespace Har_reader
             object lockObj = new object();
             BindingOperations.EnableCollectionSynchronization(Answer, lockObj);
             Client = new OdysseyClient();
+            gp = new GoogleApi();
             Profile = new Profile();
             Profile.Username = "NotConn";
             Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
+            gp.StatusChanged += Gp_StatusChanged;
+        }
+
+        private void Gp_StatusChanged(string txt)
+        {
+            Status = txt;
         }
 
         private void BM_OnReqBet(Bet tobet)
@@ -268,6 +276,9 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
+                    gp.DoSheetSave(Profile.Username, Answer.Where(t => t.MsgType == IncomeMessageType.game_crash));
+                    return;
+
                     Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
                     sfd.RestoreDirectory = true;
                     sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";

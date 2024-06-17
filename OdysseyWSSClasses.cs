@@ -131,7 +131,10 @@ namespace Har_reader
         public int game_id { get; set; }
         [JsonProperty ("game_crash")]
         public int game_crash { get; set; }
-        public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}");
+        [JsonProperty("created")]
+        public string created { get; set; }
+        public DateTime Normal_created => DateTime.ParseExact(created, "yyyy-MM-dd'T'HH:mm:ss.FFF'Z'", CultureInfo.InvariantCulture).AddHours(3);
+        public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}", Normal_created);
     }
     public class _webSocketMessages : Message
     {
@@ -211,6 +214,8 @@ namespace Har_reader
                     ImgPath = "Resources/profile.png";
                     break;
                 case IncomeMessageType.game_crash:
+                    if (dop_info is DateTime @date)
+                        Time = ((DateTimeOffset)date).ToUnixTimeSeconds();
                     GetCrashData = JsonConvert.DeserializeObject<game_crash_mess>(JObject.Parse(Data).ToString());
                     ReviewData = $"{GetCrashData.Game_crash_normal.ToString(CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/explosion.png";

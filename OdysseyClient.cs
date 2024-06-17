@@ -40,7 +40,12 @@ namespace Har_reader
         connected,
         disconnected
     }
-    public class OdysseyClient : Proper
+    public interface IStatusSender
+    {
+        public delegate void SendStatus(string txt);
+        public event SendStatus StatusChanged;
+    }
+    public class OdysseyClient : Proper, IStatusSender
     {
         private Timer _timer = new Timer(1000);
         private ManualResetEvent exitEvent = new ManualResetEvent(false);
@@ -125,19 +130,17 @@ namespace Har_reader
 
             }
         }
-
-        public delegate void SendStatus(string txt);
-        public event SendStatus StatusChanged;
         public delegate void GetedMessage(IncomeMessageType type, _webSocketMessages mess);
         public event GetedMessage MessageGeted;
-        
+        public event IStatusSender.SendStatus StatusChanged;
+
         private void GetHistory(_webSocketMessages auth_data)
         {
             JsonConvert.DeserializeObject<List<History_record_crash>>(JObject.Parse(auth_data.Data)
                 .SelectToken("table_history").ToString())
                 .OrderBy(t => t.game_id)
                 .ToList().ForEach(t => MessageGeted?.Invoke(IncomeMessageType.game_crash, t.GetMess));
-            
+
         }
         private void ConnMessageRecived(ResponseMessage msg)
         {
@@ -156,6 +159,7 @@ namespace Har_reader
         int gip_count = 0;
         private void MyCashOutMsgRecived(ResponseMessage msg)
         {
+            if (!AuthDone) return;
             if (!GameInProgress) GameInProgress = true;
             StatusChanged?.Invoke(PresetStatusBet[gip_count++]);
             if (gip_count > PresetStatusBet.Count - 1) gip_count = 0;
@@ -171,12 +175,14 @@ namespace Har_reader
         }
         private void BetAccMsgRecived(ResponseMessage msg)
         {
+            if (!AuthDone) return;
             HaveActiveBet = true;
             StatusChanged?.Invoke("BET placed");
             MessageGeted?.Invoke(IncomeMessageType.bet_accepted, _webSocketMessages.FromJson(msg.Text));
         }
         private void CrashMessageRecived(ResponseMessage msg)
         {
+            if (!AuthDone) return;
             MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text));
             StatusChanged?.Invoke("Crush!");
             if (HaveActiveBet)
@@ -199,6 +205,7 @@ namespace Har_reader
         }
         public async void PlaceBet(Bet bet)
         {
+            if (!AuthDone) return;
             StatusChanged?.Invoke("Try place a bet");
             int a = 0;
             while (GameInProgress)

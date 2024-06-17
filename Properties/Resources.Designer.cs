@@ -68,5 +68,18 @@ namespace Har_reader.Properties {
                 return ResourceManager.GetStream("alert", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на {
+        ///  &quot;type&quot;: &quot;service_account&quot;,
+        ///  &quot;project_id&quot;: &quot;odyseeyproj&quot;,
+        ///  &quot;private_key_id&quot;: &quot;4a113e813b3523718488709860b7d264fe037aa3&quot;,
+        ///  &quot;private_key&quot;: &quot;-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDcuAi+kqJHyobR\n21zYTQcpgd3F25rS285zTSG3cyXUcNUeOLYWBz4f6myo/s1gAI4MSWMojDJBqVDD\nqQSXv0q1HsVgYn8fHI502YnTUhK5SiMgkJxm2B/busFOSqFxBU9yxz0zfsAwYVdx\nqP3dpTeNRqhG9S46NXoOvocVWPtCq8O8s5Yhhy5FBvBe/z+n2p2k0E+MuMbzG6t7\ncNC/l9EsDXAVZCWjs+9byWrxnnvCZRUQF/SydASiMGXTLmngYuUTl+PlV0V/fNw8\nhrhxd9k/Z [остаток строки не уместился]&quot;;.
+        /// </summary>
+        internal static string odyseeyproj_4a113e813b35 {
+            get {
+                return ResourceManager.GetString("odyseeyproj_4a113e813b35", resourceCulture);
+            }
+        }
     }
 }

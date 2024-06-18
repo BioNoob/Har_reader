@@ -82,5 +82,17 @@ namespace Har_reader.Properties {
                 this["CashOutVal"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int AutoSaveTime {
+            get {
+                return ((int)(this["AutoSaveTime"]));
+            }
+            set {
+                this["AutoSaveTime"] = value;
+            }
+        }
     }
 }

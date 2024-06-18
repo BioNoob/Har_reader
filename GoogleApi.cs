@@ -13,6 +13,17 @@ namespace Har_reader
         static string[] Scopes = { SheetsService.Scope.Spreadsheets };
         static string ApplicationName = "OdysseySheets";
         static string SheetId = "1PhQbJpiTdkJYacoNTBvDS2ECvRqjXqDm6VWpi7JwR28";
+        private bool ProfileSet = false;
+        public void SetProfile(Profile myProfile)
+        {
+            ProfileSet = true;
+            MyProfile = myProfile;
+            StatusChanged?.Invoke("Profile getted.. Ready to save");
+        }
+        public GoogleApi()
+        {
+
+        }
 
         public event IStatusSender.SendStatus StatusChanged;
 
@@ -28,14 +39,15 @@ namespace Har_reader
 
             return service;
         }
-        string MyUserName { get; set; }
+        Profile MyProfile { get; set; }
+        string MyUserName => MyProfile.Username;
         List<Sheet> DocSheets { get; set; }
         SheetsService Service { get; set; }
         Sheet MySheet => DocSheets.SingleOrDefault(t => t.Properties.Title == MyUserName);
-        private void SetConnAndRead(string myusername)
+        private List<_webSocketMessages> Saved = new List<_webSocketMessages>();
+        private void SetConnAndRead()
         {
             Service = AuthorizeGoogleApp();
-            MyUserName = myusername;
             //get table info
             GetSheets();
             StatusChanged?.Invoke("Sheets data readed");
@@ -46,13 +58,21 @@ namespace Har_reader
             var response = request.Execute();
             DocSheets = response.Sheets.ToList();
         }
-        public async void DoSheetSave(string username, IEnumerable<_webSocketMessages> mess)
+        public async void DoSheetSave(IEnumerable<_webSocketMessages> mess)
         {
             await Task.Run(() =>
             {
+                if (!ProfileSet)
+                {
+                    StatusChanged?.Invoke("No profile to save");
+                    return;
+                }
                 StatusChanged?.Invoke("Saving Data to google");
-                SetConnAndRead(username);
-                InsertLogData(mess);
+                var buf = mess.Except(Saved);
+                if (Service is null)
+                    SetConnAndRead();
+                InsertLogData(buf);
+                Saved.AddRange(buf);
                 StatusChanged?.Invoke("Saving as can");
             });
 
@@ -60,32 +80,53 @@ namespace Har_reader
         private void InsertLogData(IEnumerable<_webSocketMessages> mess)
         {
             CheckSheetsExist();
+            StatusChanged?.Invoke("Generate insert request");
             Request rq = new Request();
             AppendCellsRequest aprq = new AppendCellsRequest();
             aprq.SheetId = MySheet.Properties.SheetId;
             aprq.Fields = "*";//"userEnteredValue";
             aprq.Rows = new List<RowData>();
-            var aq = mess.OrderBy(t => t.Time_normal);
+            //var aq = mess.OrderBy(t => t.GameId).Where(t => t.MsgType != IncomeMessageType.connected 
+            var aq = new List<_webSocketMessages>();
+            mess.Select(o => o.GameId).Distinct().ToList().ForEach(w =>
+              {
+                  var id_mess = mess.Where(t => t.GameId == w);
+                  var a = id_mess.First(t => t.MsgType == IncomeMessageType.game_crash);
+                  a.ProfitData = id_mess.Any(t => t.ProfitData != 0) ? mess.Single(t => t.ProfitData != 0).ProfitData : 0;
+                  aq.Add(a);
+              });
+            aq = new List<_webSocketMessages>(aq.OrderByDescending(t => t.GameId));
             foreach (var item in aq)
             {
                 RowData row = new RowData();
                 row.Values = new List<CellData>();
-                row.Values.Add(new CellData()
-                {
-                    UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
-                    UserEnteredValue = new ExtendedValue() { NumberValue = item.Time_normal.ToOADate() },
-                }
-                );
+                //row.Values.Add(new CellData()
+                //{
+                //    UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
+                //    UserEnteredValue = new ExtendedValue() { NumberValue = item.Time_normal.ToOADate() },
+                //}
+                //);
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GetCrashData.Game_crash_normal } });
+                if (item.ProfitData < 0)
+                {
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.ProfitData } });
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
+                }
+                if (item.ProfitData > 0)
+                {
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.ProfitData } });
+                }
                 aprq.Rows.Add(row);
             }
-            StatusChanged?.Invoke("Generate insert request");
             rq.AppendCells = aprq;
             BatchUpdateSpreadsheetRequest updateRequest = new BatchUpdateSpreadsheetRequest
             {
                 Requests = new List<Request>() { rq }
             };
             _ = Service.Spreadsheets.BatchUpdate(updateRequest, SheetId).Execute();
+            StatusChanged?.Invoke("Saving Done!");
         }
         private void CheckSheetsExist()
         {
@@ -101,11 +142,11 @@ namespace Har_reader
                 {
                     AddSheet = addSheetRequest
                 });
-                var valgetreq = Service.Spreadsheets.Values.Get(SheetId, "Conclusion!A1:A1");//.Execute();
+                var valgetreq = Service.Spreadsheets.Values.Get(SheetId, "Conclusion!A2:A2");//.Execute();
                 valgetreq.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.FORMULA;
                 var formula = valgetreq.Execute().Values[0][0].ToString();
                 //докинули в формулу сбоку новый лист по юзеру
-                formula = formula.Replace("};", $"{MyUserName}!A:B" + "};");
+                formula = formula.Replace("};", $"{MyUserName}!A2:B" + "};");
                 UpdateCellsRequest ucr = new UpdateCellsRequest();
                 ucr.Fields = "*";
                 ucr.Rows = new List<RowData>();
@@ -119,14 +160,37 @@ namespace Har_reader
                         }
                     }
                 });
-                ucr.Range = new GridRange() { StartColumnIndex = 0, StartRowIndex = 0, SheetId = DocSheets.Single(t => t.Properties.Title == "Conclusion").Properties.SheetId };
+                ucr.Range = new GridRange() { StartColumnIndex = 0, StartRowIndex = 1, SheetId = DocSheets.Single(t => t.Properties.Title == "Conclusion").Properties.SheetId };
 
                 batchUpdateSpreadsheetRequest.Requests.Add(new Request { UpdateCells = ucr });
                 var batchUpdateRequest = Service.Spreadsheets.BatchUpdate(batchUpdateSpreadsheetRequest, SheetId);
-                _ = batchUpdateRequest.Execute();
+                var answ = batchUpdateRequest.Execute();
+
+                var sheetprop = answ.Replies.Where(w => w.AddSheet != null).Select(w => w.AddSheet).Single().Properties;
+                Sheet t = new Sheet();
+                t.Properties = new SheetProperties();
+                t.Properties.SheetId = sheetprop.SheetId;
+                t.Properties.Title = sheetprop.Title;
+                DocSheets.Add(t);
+                AppendCellsRequest aprq = new AppendCellsRequest();
+                aprq.SheetId = MySheet.Properties.SheetId;
+                aprq.Fields = "*";//"userEnteredValue";
+                aprq.Rows = new List<RowData>();
+                RowData row = new RowData();
+                row.Values = new List<CellData>();
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Game ID" } });
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Crash value" } });
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Lose value" } });
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Win value" } });
+                aprq.Rows.Add(row);
+                BatchUpdateSpreadsheetRequest updateRequest = new BatchUpdateSpreadsheetRequest
+                {
+                    Requests = new List<Request>() { new Request() { AppendCells = aprq } }
+                };
+                _ = Service.Spreadsheets.BatchUpdate(updateRequest, SheetId).Execute();
             }
-            StatusChanged?.Invoke("User sheets Founded!");
-            GetSheets();
+            else
+                StatusChanged?.Invoke("User sheets Founded!");
 
         }
     }

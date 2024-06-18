@@ -35,6 +35,7 @@ namespace Har_reader
         game_crash,
         tick,
         bet_accepted,
+        bets,
         lose,
         none,
         connected,
@@ -54,7 +55,7 @@ namespace Har_reader
         private string init_mess = "";
         private static readonly object GATE1 = new object();
         private int counter_of_sec = 0;
-        private int MyId;
+        private long MyId;
         private bool gameInProgress;
         private List<string> PresetStatusBet = new List<string> { "Game in progress", "Game in progress.", "Game in progress..", "Game in progress...", "Game in progress...." };
         private List<string> PresetStatusConn = new List<string> { "Connecting", "Connecting.", "Connecting..", "Connecting...", "Connecting...." };
@@ -63,6 +64,7 @@ namespace Har_reader
         public bool GameInProgress { get => gameInProgress; set => SetProperty(ref gameInProgress, value); }
         public bool HaveActiveBet { get => haveActiveBet; set => SetProperty(ref haveActiveBet, value); }
         private bool AuthDone { get => authDone; set => SetProperty(ref authDone, value); }
+        private long GameID { get; set; }
         public OdysseyClient()
         {
             _timer.Elapsed += _timer_Elapsed;
@@ -88,7 +90,13 @@ namespace Har_reader
                 .Where(t => t.Text.Contains("\"type\":\"game_starting\""))
                 .ObserveOn(TaskPoolScheduler.Default)
                 .Synchronize(GATE1)
-                .Subscribe(t => { GameInProgress = false; StatusChanged?.Invoke("Run is starting"); });
+                .Subscribe(t =>
+                {
+                    GameInProgress = false; 
+                    JObject o = JObject.Parse(t.Text);
+                    GameID = (long)o.SelectToken("data").SelectToken("game_id");
+                    StatusChanged?.Invoke("Run is starting");
+                });
             client.MessageReceived
                 .Where(t => !string.IsNullOrEmpty(t.Text))
                 .Where(t => t.Text.Contains("\"type\":\"tick\""))
@@ -107,6 +115,12 @@ namespace Har_reader
                 .ObserveOn(TaskPoolScheduler.Default)
                 .Synchronize(GATE1)
                 .Subscribe(BetAccMsgRecived);
+            client.MessageReceived
+                .Where(t => !string.IsNullOrEmpty(t.Text))
+                .Where(t => t.Text.Contains("\"type\":\"bets\""))
+                .ObserveOn(TaskPoolScheduler.Default)
+                .Synchronize(GATE1)
+                .Subscribe(BetsMsgRecived);
         }
 
         private async void _timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -149,7 +163,8 @@ namespace Har_reader
                 _timer.Stop();
                 StatusChanged?.Invoke("Connected");
                 MessageGeted?.Invoke(IncomeMessageType.connected, null);
-                var xz = _webSocketMessages.FromJson(msg.Text);
+                var xz = _webSocketMessages.FromJson(msg.Text, 0);
+                GameID = xz.GameId;
                 MessageGeted?.Invoke(IncomeMessageType.initial_data, xz);
                 MyId = xz.GetProfileData.Id;
                 GetHistory(xz);
@@ -169,8 +184,19 @@ namespace Har_reader
                 if (msg.Text.Contains(MyId.ToString()))
                 {
                     HaveActiveBet = false;
-                    MessageGeted?.Invoke(IncomeMessageType.tick, _webSocketMessages.FromJson(msg.Text, MyId));
+                    MessageGeted?.Invoke(IncomeMessageType.tick, _webSocketMessages.FromJson(msg.Text, GameID, MyId));
                 }
+            }
+        }
+        private void BetsMsgRecived(ResponseMessage msg)
+        {
+            if (!AuthDone) return;
+            var q = _webSocketMessages.FromJson(msg.Text, GameID);
+            if (q.GetBetsMessageData.UserId == MyId)
+            {
+                HaveActiveBet = true;
+                StatusChanged?.Invoke("BET outdoor placed");
+                MessageGeted?.Invoke(IncomeMessageType.bets, q);
             }
         }
         private void BetAccMsgRecived(ResponseMessage msg)
@@ -178,16 +204,16 @@ namespace Har_reader
             if (!AuthDone) return;
             HaveActiveBet = true;
             StatusChanged?.Invoke("BET placed");
-            MessageGeted?.Invoke(IncomeMessageType.bet_accepted, _webSocketMessages.FromJson(msg.Text));
+            MessageGeted?.Invoke(IncomeMessageType.bet_accepted, _webSocketMessages.FromJson(msg.Text, GameID));
         }
         private void CrashMessageRecived(ResponseMessage msg)
         {
             if (!AuthDone) return;
-            MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text));
+            MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text, GameID));
             StatusChanged?.Invoke("Crush!");
             if (HaveActiveBet)
             {
-                var xz = new _webSocketMessages();
+                var xz = new _webSocketMessages(GameID);
                 xz.HandSetData("lose");
                 MessageGeted?.Invoke(IncomeMessageType.lose, xz);
             }

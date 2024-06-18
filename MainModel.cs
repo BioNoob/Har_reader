@@ -8,7 +8,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Data;
 
 namespace Har_reader
@@ -21,7 +23,6 @@ namespace Har_reader
         private string token;
         private bool alertsignalon;
         private string status;
-        private string path;
         private int lowerCheckValue;
         private bool is_connected = false;
         private OdysseyClient client;
@@ -34,7 +35,12 @@ namespace Har_reader
         private bool expEnabled;
         private Bet CurrBet = null;
         private int crashCount;
+        private int autoSaveTime;
+        SoundPlayer p_win = new SoundPlayer(Resources.win);
+        SoundPlayer p_lose = new SoundPlayer(Resources.lose);
+        private string saveStatus;
 
+        public string SaveStatus { get => saveStatus; set => SetProperty(ref saveStatus, value); }
         private OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
         private GoogleApi gp { get; set; }
         public Profile Profile { get => profile; set => SetProperty(ref profile, value); }
@@ -58,32 +64,55 @@ namespace Har_reader
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
-
+        public int AutoSaveTime
+        {
+            get => autoSaveTime; set
+            {
+                SaveTimer.Stop();
+                SaveTimer.Interval = value * 1000 * 60;
+                SetProperty(ref autoSaveTime, value);
+                if (value != 0)
+                    SaveTimer.Start();
+            }
+        }
+        private Timer SaveTimer;
         public MainModel()
         {
             Answer.CollectionChanged += Answer_CollectionChanged;
             BM = new BetsModel();
             BM.OnReqBet += BM_OnReqBet;
+            SaveTimer = new Timer();
+            SaveTimer.AutoReset = true;
+            SaveTimer.Elapsed += SaveTimer_Elapsed;
             BM.AlertValCounter = Settings.Default.AlertVal;
             BM.LowerCheckVal = Settings.Default.LowerVal;
             BM.Bet.BetVal = Settings.Default.BetVal;
             BM.Bet.CashOut = Settings.Default.CashOutVal;
+            AutoSaveTime = Settings.Default.AutoSaveTime;
             Token = Settings.Default.Token;
+            SaveStatus = "Hello, I'm save status";
+            Status = "Hello, Im'a status";
             object lockObj = new object();
             BindingOperations.EnableCollectionSynchronization(Answer, lockObj);
             Client = new OdysseyClient();
-            gp = new GoogleApi();
             Profile = new Profile();
-            Profile.Username = "NotConn";
+            Profile.Username = "NULL";
             Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
+            gp = new GoogleApi();
             gp.StatusChanged += Gp_StatusChanged;
+        }
+
+
+        private void SaveTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            gp.DoSheetSave(Answer);
         }
 
         private void Gp_StatusChanged(string txt)
         {
-            Status = txt;
+            SaveStatus = txt;
         }
 
         private void BM_OnReqBet(Bet tobet)
@@ -99,6 +128,8 @@ namespace Har_reader
             {
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
+                    gp.SetProfile(Profile);
+                    SaveTimer.Start();
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.game_crash:
@@ -126,6 +157,13 @@ namespace Har_reader
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
                     break;
+                case IncomeMessageType.bets:
+                    CurrBet = new Bet();
+                    CurrBet.BetVal = mess.GetBetAccData.BetVal;
+                    CurrBet.CashOut = mess.GetBetAccData.CashOut;
+                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
+                    Answer.Insert(0, mess);
+                    break;
                 case IncomeMessageType.bet_accepted:
                     CurrBet = new Bet();
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
@@ -137,12 +175,16 @@ namespace Har_reader
                 case IncomeMessageType.tick:
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
-                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk + CurrBet.Profit);
-                    mess.ReviewData = $"Win {CurrBet.Profit.ToString(CultureInfo.InvariantCulture)}";
+                    p_win.Play();
+                    mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
+                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
+                    mess.ReviewData = $"Win {mess.ProfitData.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
                     BM.AutoBetOn = false;
+                    p_lose.Play();
+                    mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
@@ -153,6 +195,7 @@ namespace Har_reader
                 case IncomeMessageType.disconnected:
                     Is_connected = false;
                     BM.BetsEnabled = false;
+                    SaveTimer.Stop();
                     break;
                 default:
                     break;
@@ -166,22 +209,6 @@ namespace Har_reader
 
         private void Answer_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            //if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
-            //{
-            //    if (e.Action == NotifyCollectionChangedAction.Add)
-            //    {
-            //        var crsh_data = (e.NewItems[0] as _webSocketMessages).GetCrashData;
-            //        crsh_data.Lower = crsh_data.Game_crash_normal <= BM.LowerCheckVal;
-            //        Counter_lowers = crsh_data.Lower ? Counter_lowers + 1 : Counter_lowers;
-            //        if (Counter_lowers >= BM.AlertValCounter)
-            //            AlertSignalOn = true;
-            //        if (!crsh_data.Lower)
-            //        {
-            //            Counter_lowers = 0;
-            //            AlertSignalOn = false;
-            //        }
-            //    }
-            //}
             CrashCount = Answer.Where(t => t.MsgType == IncomeMessageType.game_crash).Count();
             ExpEnabled = CrashCount > 0 ? true : false;
         }
@@ -262,6 +289,7 @@ namespace Har_reader
                     Settings.Default.BetVal = BM.Bet.BetVal;
                     Settings.Default.CashOutVal = BM.Bet.CashOut;
                     Settings.Default.Token = Token;
+                    Settings.Default.AutoSaveTime = AutoSaveTime;
                     Settings.Default.Save();
                     Environment.Exit(1);
                 },
@@ -276,31 +304,29 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
-                    gp.DoSheetSave(Profile.Username, Answer.Where(t => t.MsgType == IncomeMessageType.game_crash));
-                    return;
-
-                    Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
-                    sfd.RestoreDirectory = true;
-                    sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";
-                    sfd.DefaultExt = "csv";
-                    sfd.InitialDirectory = path;
-                    sfd.Title = "Save export file";
-                    sfd.FileName = "EXPORT.csv";
-                    if (sfd.ShowDialog() == true)
-                    {
-                        using (var writer = new StreamWriter(sfd.FileName))
-                        using (var csv = new CsvWriter(writer,
-                            new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" }))
-                        {
-                            csv.Context.RegisterClassMap<FooMap>();
-                            csv.WriteRecords(Answer.Where(t=>t.MsgType == IncomeMessageType.game_crash));
-                        }
-                        ProcessStartInfo psi = new ProcessStartInfo();
-                        psi.FileName = sfd.FileName;
-                        psi.UseShellExecute = true;
-                        Process.Start(psi);
-                        Status = "Saved";
-                    }
+                    gp.DoSheetSave(Answer);
+                    //Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
+                    //sfd.RestoreDirectory = true;
+                    //sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";
+                    //sfd.DefaultExt = "csv";
+                    //sfd.InitialDirectory = path;
+                    //sfd.Title = "Save export file";
+                    //sfd.FileName = "EXPORT.csv";
+                    //if (sfd.ShowDialog() == true)
+                    //{
+                    //    using (var writer = new StreamWriter(sfd.FileName))
+                    //    using (var csv = new CsvWriter(writer,
+                    //        new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" }))
+                    //    {
+                    //        csv.Context.RegisterClassMap<FooMap>();
+                    //        csv.WriteRecords(Answer.Where(t => t.MsgType == IncomeMessageType.game_crash));
+                    //    }
+                    //    ProcessStartInfo psi = new ProcessStartInfo();
+                    //    psi.FileName = sfd.FileName;
+                    //    psi.UseShellExecute = true;
+                    //    Process.Start(psi);
+                    //    Status = "Saved";
+                    //}
                 },
                 (obj) => true
                 );
@@ -316,6 +342,7 @@ namespace Har_reader
                     AlertSignalOn = false;
                     Counter_lowers = 0;
                     Client.StopClient();
+                    SaveTimer.Stop();
                 },
                 (obj) => true
                 );
@@ -334,5 +361,8 @@ namespace Har_reader
                 return;
             }
         }
+
+
+
     }
 }

@@ -22,21 +22,24 @@
 
   <ItemGroup>
     <None Remove="close.png" />
-    <None Remove="Resources\alert.wav" />
+    <None Remove="Resources\alert_.wav" />
     <None Remove="Resources\Chip.png" />
     <None Remove="Resources\csv_exp.png" />
     <None Remove="Resources\explosion.png" />
     <None Remove="Resources\lose.png" />
+    <None Remove="Resources\lose.wav" />
     <None Remove="Resources\mute.png" />
     <None Remove="Resources\odyseeyproj-4a113e813b35.json" />
     <None Remove="Resources\profile.png" />
     <None Remove="Resources\punk-token.png" />
     <None Remove="Resources\win.png" />
+    <None Remove="Resources\win.wav" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\alert.wav" />
+    <EmbeddedResource Include="Resources\alert_.wav" />
     <EmbeddedResource Include="Resources\odyseeyproj-4a113e813b35.json" />
+    <EmbeddedResource Include="Resources\win.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +48,7 @@
     <Resource Include="Resources\csv_exp.png" />
     <Resource Include="Resources\explosion.png" />
     <Resource Include="Resources\lose.png" />
+    <EmbeddedResource Include="Resources\lose.wav" />
     <Resource Include="Resources\mute.png" />
     <Resource Include="Resources\profile.png" />
     <Resource Include="Resources\punk-token.png" />

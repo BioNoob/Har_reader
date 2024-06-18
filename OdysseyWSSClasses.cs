@@ -17,8 +17,8 @@ namespace Har_reader
     {
         private double bets;
         private double cashOut;
-        private int jAmount;
-        private int jCash;
+        private long jAmount;
+        private long jCash;
 
         public Bet() { }
         public Bet(double bet, double cash_out)
@@ -27,9 +27,9 @@ namespace Har_reader
             CashOut = cash_out;
         }
         [JsonProperty("amount")]
-        public int JAmount { get => jAmount; set { jAmount = value; BetVal = value / 1000000000d; } }
+        public long JAmount { get => jAmount; set { jAmount = value; BetVal = value / 1000000000d; } }
         [JsonProperty("autoCashOut")]
-        public int JCash { get => jCash; set { jCash = value; CashOut = value / 100d; } }
+        public long JCash { get => jCash; set { jCash = value; CashOut = value / 100d; } }
         [JsonIgnore]
         public double BetVal
         {
@@ -89,29 +89,29 @@ namespace Har_reader
     public class Profile : Message
     {
         private Balance punkBalance;
-        private int id;
+        private long id;
         private string username;
 
         public Profile() { Balance = new Balance(); }
         [JsonProperty("balance")]
         public Balance Balance { get => punkBalance; set => SetProperty(ref punkBalance, value); }
         [JsonProperty("id")]
-        public int Id { get => id; set => SetProperty(ref id, value); }
+        public long Id { get => id; set => SetProperty(ref id, value); }
         [JsonProperty("username")]
         public string Username { get => username; set => SetProperty(ref username, value); }
     }
     public class StartingMess : Message
     {
-        private int id;
+        private long id;
         [JsonProperty("game_id")]
-        public int Id { get => id; set => SetProperty(ref id, value); }
+        public long Id { get => id; set => SetProperty(ref id, value); }
     }
     public class CashOuts : Proper
     {
         private double val;
-        private int id;
+        private long id;
 
-        public int Id { get => id; set => SetProperty(ref id, value); }
+        public long Id { get => id; set => SetProperty(ref id, value); }
         public double Value { get => val; set => SetProperty(ref val, value); }
         public double NValue => Value / 100;
     }
@@ -125,16 +125,25 @@ namespace Har_reader
         //[JsonIgnore]
         public CashOuts MyCashOut { get => myCashOut; set => SetProperty(ref myCashOut, value); }
     }
+    public class BetsMessage
+    {
+        [JsonProperty("0")]
+        public long UserId { get; set; }
+        [JsonProperty("1")]
+        public string UserName { get; set; }
+        [JsonProperty("2")]
+        public long BetValue { get; set; }
+    }
     public class History_record_crash
     {
         [JsonProperty("game_id")]
-        public int game_id { get; set; }
-        [JsonProperty ("game_crash")]
+        public long game_id { get; set; }
+        [JsonProperty("game_crash")]
         public int game_crash { get; set; }
         [JsonProperty("created")]
         public string created { get; set; }
         public DateTime Normal_created => DateTime.ParseExact(created, "yyyy-MM-dd'T'HH:mm:ss.FFF'Z'", CultureInfo.InvariantCulture).AddHours(3);
-        public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}", Normal_created);
+        public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}", game_id, Normal_created);
     }
     public class _webSocketMessages : Message
     {
@@ -145,26 +154,35 @@ namespace Har_reader
         private Profile getProfileData;
         private TickMess getTickdData;
         private Bet getBetAcc;
+        private BetsMessage getBetsMessageData;
         private string imgPath;
         private string reviewData;
+        private long gameId;
+
 
         public string Data { get => data; set => SetProperty(ref data, value); }
         public string Type { get => type; set => SetProperty(ref type, value); }
         public double Time { get => time; set => SetProperty(ref time, value); }
         public string ImgPath { get => imgPath; set => SetProperty(ref imgPath, value); }
         public string ReviewData { get => reviewData; set => SetProperty(ref reviewData, value); }
-        public _webSocketMessages()
+        public long GameId { get => gameId; set => SetProperty(ref gameId, value); }
+        private _webSocketMessages()
         {
             GetCrashData = null;
             GetProfileData = null;
             GetTickdData = null;
             GetBetAccData = null;
+            GetBetsMessageData = null;
             Time = DateTimeOffset.Now.ToUnixTimeSeconds();
         }
-        public static _webSocketMessages FromJson(string json, object dop_info = null)
+        public _webSocketMessages(long gameid) : base()
+        {
+            GameId = gameid;
+        }
+        public static _webSocketMessages FromJson(string json, long game_id, object dop_info = null)
         {
             JObject o = JObject.Parse(json);
-            var m = new _webSocketMessages() { Type = o.SelectToken("type").ToString(), Data = o.SelectToken("data").ToString(), Time = DateTimeOffset.Now.ToUnixTimeSeconds() };
+            var m = new _webSocketMessages(game_id) { Type = o.SelectToken("type").ToString(), Data = o.SelectToken("data").ToString(), Time = DateTimeOffset.Now.ToUnixTimeSeconds() };
             m.SetData(dop_info);
             return m;
         }
@@ -180,6 +198,8 @@ namespace Har_reader
                         return IncomeMessageType.game_crash;
                     case "tick":
                         return IncomeMessageType.tick;
+                    case "bets":
+                        return IncomeMessageType.bets;
                     case "bet_accepted":
                         return IncomeMessageType.bet_accepted;
                     case "lose":
@@ -199,6 +219,12 @@ namespace Har_reader
         public TickMess GetTickdData { get => getTickdData; set => SetProperty(ref getTickdData, value); }
         [JsonIgnore]
         public Bet GetBetAccData { get => getBetAcc; set => SetProperty(ref getBetAcc, value); }
+        [JsonIgnore]
+        public BetsMessage GetBetsMessageData { get => getBetsMessageData; set => SetProperty(ref getBetsMessageData, value); }
+        /// <summary>
+        /// Отриц при луз, Положительный при вин
+        /// </summary>
+        public double ProfitData { get; set; }
         public void HandSetData(string type)
         {
             Type = type;
@@ -209,6 +235,7 @@ namespace Har_reader
             switch (MsgType)
             {
                 case IncomeMessageType.initial_data:
+                    GameId = (int)JObject.Parse(Data).SelectToken("game_id");
                     GetProfileData = JsonConvert.DeserializeObject<Profile>(JObject.Parse(Data).SelectToken("user").ToString());
                     ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.00", CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/profile.png";
@@ -235,6 +262,16 @@ namespace Har_reader
                             GetTickdData.MyCashOut = wl.Single(q => q.Id == @int);
                     }
                     ImgPath = "Resources/win.png";
+                    break;
+                case IncomeMessageType.bets:
+                    GetBetsMessageData = new BetsMessage();
+                    var str = Data.TrimStart('[').TrimEnd(']').Trim().Split(",");
+                    GetBetsMessageData.UserId = long.Parse(str[0].Trim());
+                    GetBetsMessageData.UserName = str[1].Trim();
+                    GetBetsMessageData.BetValue = long.Parse(str[2].Trim());
+                    GetBetAccData = new Bet() { JAmount = GetBetsMessageData.BetValue, CashOut = 100 };
+                    ReviewData = $"Bet {GetBetAccData.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut ? x";
+                    ImgPath = "Resources/chip.png";
                     break;
                 case IncomeMessageType.bet_accepted:
                     GetBetAccData = JsonConvert.DeserializeObject<Bet>(JObject.Parse(Data).SelectToken("bet").ToString());

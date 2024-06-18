@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Media;
 using System.Runtime.InteropServices;
 using System.Timers;
@@ -82,6 +83,11 @@ namespace Har_reader
                 p.Stop();
                 muted = true;
             }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true});
         }
     }
 }

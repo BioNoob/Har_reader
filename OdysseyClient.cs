@@ -165,9 +165,9 @@ namespace Har_reader
                 MessageGeted?.Invoke(IncomeMessageType.connected, null);
                 var xz = _webSocketMessages.FromJson(msg.Text, 0);
                 GameID = xz.GameId;
-                MessageGeted?.Invoke(IncomeMessageType.initial_data, xz);
                 MyId = xz.GetProfileData.Id;
                 GetHistory(xz);
+                MessageGeted?.Invoke(IncomeMessageType.initial_data, xz);
                 AuthDone = true;
             }
         }

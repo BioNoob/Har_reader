@@ -132,7 +132,7 @@ namespace Har_reader
         [JsonProperty("1")]
         public string UserName { get; set; }
         [JsonProperty("2")]
-        public long BetValue { get; set; }
+        public double BetValue { get; set; }
     }
     public class History_record_crash
     {
@@ -249,17 +249,38 @@ namespace Har_reader
                     break;
                 case IncomeMessageType.tick:
                     var t = JObject.Parse(Data);
-                    GetTickdData = new TickMess();
-                    if (t.SelectToken("cashouts") is JObject)
+                    if (dop_info is long @int)
                     {
-                        CashOuts w = JsonConvert.DeserializeObject<CashOuts>(t.SelectToken("cashouts").ToString());
-                        GetTickdData.MyCashOut = w;
-                    }
-                    else if (t.SelectToken("cashouts") is JArray)
-                    {
-                        List<CashOuts> wl = JsonConvert.DeserializeObject<List<CashOuts>>(t.SelectToken("cashouts").ToString());
-                        if (dop_info is int @int)
-                            GetTickdData.MyCashOut = wl.Single(q => q.Id == @int);
+                        GetTickdData = new TickMess();
+                        if (t.SelectToken("cashouts") is JObject)
+                        {
+                            var z = t.SelectToken("cashouts").Children().Single().ToString();
+                            var str1 = z.ToString().Trim().Split(":");
+                            if (long.Parse(str1[0].Trim('\"')) == @int)
+                            {
+                                CashOuts w = new CashOuts();
+                                w.Id = @int;//long.Parse(str1[0].Trim());
+                                w.Value = double.Parse(str1[1].Trim());
+                                GetTickdData.MyCashOut = w;
+                            }
+                        }
+                        else if (t.SelectToken("cashouts") is JArray)
+                        {
+
+                            var z = t.SelectToken("cashouts").Children().ToList();
+                            foreach (var item in z)
+                            {
+                                var itstr = item.ToString().Trim().Split(":");
+                                if (long.Parse(itstr[0].Trim('\"')) == @int)
+                                {
+                                    CashOuts w = new CashOuts();
+                                    w.Id = @int;
+                                    w.Value = double.Parse(itstr[1]);
+                                    GetTickdData.MyCashOut = w;
+                                    break;
+                                }
+                            }
+                        }
                     }
                     ImgPath = "Resources/win.png";
                     break;
@@ -269,7 +290,7 @@ namespace Har_reader
                     GetBetsMessageData.UserId = long.Parse(str[0].Trim());
                     GetBetsMessageData.UserName = str[1].Trim();
                     GetBetsMessageData.BetValue = long.Parse(str[2].Trim());
-                    GetBetAccData = new Bet() { JAmount = GetBetsMessageData.BetValue, CashOut = 100 };
+                    GetBetAccData = new Bet() { JAmount = (long)GetBetsMessageData.BetValue, CashOut = 100 };
                     ReviewData = $"Bet {GetBetAccData.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut ? x";
                     ImgPath = "Resources/chip.png";
                     break;

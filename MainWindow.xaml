@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" FontFamily="Jura" WindowStyle="None" MouseDown="Window_MouseDown"
-        xmlns:local="clr-namespace:Har_reader" KeyDown="Window_KeyDown"
+        xmlns:local="clr-namespace:Har_reader" KeyDown="Window_KeyDown" 
         Title="Har reader" Height="500" MinHeight="300" MinWidth="770" Width="550">
     <Window.Resources>
         <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 
@@ -20,10 +20,16 @@
     </Window.TaskbarItemInfo>
     <DockPanel ClipToBounds="True">
         <Grid Margin="5,0" DockPanel.Dock="Top">
-            <Button Width="25" Height="25" x:Name="CloseBtn" Command="{Binding ExitCommand}" HorizontalAlignment="Right" Grid.Column="2" 
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Width="25" Height="25" Click="Button_Click_1" HorizontalAlignment="Right" Grid.Column="2" 
                 Padding="0" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
-                <Image Source="Resources/close.png" Margin="0" Stretch="UniformToFill" />
-            </Button>
+                    <Image Source="Resources/minimize.png" Margin="0" Stretch="UniformToFill" />
+                </Button>
+                <Button Width="25" Height="25" Command="{Binding ExitCommand}" HorizontalAlignment="Right" Grid.Column="2" 
+                Padding="0" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <Image Source="Resources/close.png" Margin="0" Stretch="UniformToFill" />
+                </Button>
+            </StackPanel>
             <Label Content="Har reader" Padding="0" VerticalContentAlignment="Center"
                    HorizontalAlignment="Left" HorizontalContentAlignment="Center" FontWeight="Bold"/>
         </Grid>
@@ -196,12 +202,12 @@
                             Sheets Link
                         </Hyperlink>
                     </TextBlock>
-                    <Label FontSize="10" Margin="10,0,0,0" Content="AutoSave time, min :" Padding="0" VerticalAlignment="Center" Grid.Column="1">
+                    <Label FontSize="10" Margin="10,0,0,0" Content="AutoSave round, cnt :" Padding="0" VerticalAlignment="Center" Grid.Column="1">
                         <Label.ToolTip>
                             <ToolTip Content="IF 0 = disable AutoSave"/>
                         </Label.ToolTip>
                     </Label>
-                    <TextBox FontSize="10" Grid.Column="2" Width="25" Padding="0" Margin="10,0,0,0" Text="{Binding AutoSaveTime}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">
+                    <TextBox FontSize="10" Grid.Column="2" Width="25" Padding="0" Margin="10,0,0,0" Text="{Binding AutoSaveCounter}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">
                         <TextBox.ToolTip>
                             <ToolTip Content="IF 0 = disable AutoSave"/>
                         </TextBox.ToolTip>

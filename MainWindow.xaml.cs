@@ -89,5 +89,10 @@ namespace Har_reader
         {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true});
         }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
     }
 }

@@ -25,6 +25,7 @@ namespace Har_reader
         private string status;
         private int lowerCheckValue;
         private bool is_connected = false;
+        private bool permition_to_save = false;
         private OdysseyClient client;
         private CommandHandler _connCommand;
         private CommandHandler _exitcommand;
@@ -35,7 +36,7 @@ namespace Har_reader
         private bool expEnabled;
         private Bet CurrBet = null;
         private int crashCount;
-        private int autoSaveTime;
+        private int autosavecounter;
         SoundPlayer p_win = new SoundPlayer(Resources.win);
         SoundPlayer p_lose = new SoundPlayer(Resources.lose);
         private string saveStatus;
@@ -64,31 +65,19 @@ namespace Har_reader
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
-        public int AutoSaveTime
-        {
-            get => autoSaveTime; set
-            {
-                SaveTimer.Stop();
-                SaveTimer.Interval = value * 1000 * 60;
-                SetProperty(ref autoSaveTime, value);
-                if (value != 0)
-                    SaveTimer.Start();
-            }
-        }
-        private Timer SaveTimer;
+        public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
+        public int CurrSaveCounter { get; set; } = 0;
+        private bool HandledBet { get; set; } = false;
         public MainModel()
         {
             Answer.CollectionChanged += Answer_CollectionChanged;
             BM = new BetsModel();
             BM.OnReqBet += BM_OnReqBet;
-            SaveTimer = new Timer();
-            SaveTimer.AutoReset = true;
-            SaveTimer.Elapsed += SaveTimer_Elapsed;
             BM.AlertValCounter = Settings.Default.AlertVal;
             BM.LowerCheckVal = Settings.Default.LowerVal;
             BM.Bet.BetVal = Settings.Default.BetVal;
             BM.Bet.CashOut = Settings.Default.CashOutVal;
-            AutoSaveTime = Settings.Default.AutoSaveTime;
+            AutoSaveCounter = Settings.Default.AutoSaveTime;
             Token = Settings.Default.Token;
             SaveStatus = "Hello, I'm save status";
             Status = "Hello, Im'a status";
@@ -103,20 +92,13 @@ namespace Har_reader
             gp = new GoogleApi();
             gp.StatusChanged += Gp_StatusChanged;
         }
-
-
-        private void SaveTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            gp.DoSheetSave(Answer);
-        }
-
         private void Gp_StatusChanged(string txt)
         {
             SaveStatus = txt;
         }
-
         private void BM_OnReqBet(Bet tobet)
         {
+            HandledBet = true;
             Client.PlaceBet(tobet);
         }
 
@@ -129,8 +111,8 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
                     gp.SetProfile(Profile);
-                    SaveTimer.Start();
                     Answer.Insert(0, mess);
+                    permition_to_save = true;
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
@@ -146,10 +128,8 @@ namespace Har_reader
                         if (!AlertSignalOn) AlertSignalOn = true;
                         if (BM.AutoBetOn)
                         {
-                            //таким макаром будем плейсить каждый раз пока условие работает
-                            //System.Windows.MessageBox.Show("BET MAY BE PLACED AT REQUEST\n" +
-                            //    $"{BM.Bet.GetRequest}");
-                            Client.PlaceBet(BM.Bet);
+                            BM_OnReqBet(BM.Bet);
+                            BM.AutoBetOn = false;
                         }
                     }
                     else
@@ -158,6 +138,8 @@ namespace Har_reader
                     }
                     break;
                 case IncomeMessageType.bets:
+                    if (HandledBet)
+                        return;
                     CurrBet = new Bet();
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
@@ -165,6 +147,8 @@ namespace Har_reader
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.bet_accepted:
+                    if (!HandledBet)
+                        return;
                     CurrBet = new Bet();
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
@@ -176,14 +160,15 @@ namespace Har_reader
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
                     p_win.Play();
+                    HandledBet = false;
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
-                    BM.AutoBetOn = false;
                     p_lose.Play();
+                    HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
@@ -195,7 +180,6 @@ namespace Har_reader
                 case IncomeMessageType.disconnected:
                     Is_connected = false;
                     BM.BetsEnabled = false;
-                    SaveTimer.Stop();
                     break;
                 default:
                     break;
@@ -209,7 +193,22 @@ namespace Har_reader
 
         private void Answer_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            int last = CrashCount;
             CrashCount = Answer.Where(t => t.MsgType == IncomeMessageType.game_crash).Count();
+            CurrSaveCounter += CrashCount - last;
+            if (AutoSaveCounter != 0 && permition_to_save)
+            {
+                if (CurrSaveCounter >= AutoSaveCounter)
+                {
+                    gp.DoSheetSave(Answer);
+                    CurrSaveCounter = 0;
+                }
+                else
+                {
+                    if (!gp.SaveInProgress)
+                        SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
+                }
+            }
             ExpEnabled = CrashCount > 0 ? true : false;
         }
         public CommandHandler ConnectCommand
@@ -276,7 +275,6 @@ namespace Har_reader
         //        );
         //    }
         //}
-
         public CommandHandler ExitCommand
         {
             get
@@ -289,7 +287,7 @@ namespace Har_reader
                     Settings.Default.BetVal = BM.Bet.BetVal;
                     Settings.Default.CashOutVal = BM.Bet.CashOut;
                     Settings.Default.Token = Token;
-                    Settings.Default.AutoSaveTime = AutoSaveTime;
+                    Settings.Default.AutoSaveTime = AutoSaveCounter;
                     Settings.Default.Save();
                     Environment.Exit(1);
                 },
@@ -304,7 +302,8 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
-                    gp.DoSheetSave(Answer);
+                    if (permition_to_save)
+                        gp.DoSheetSave(Answer);
                     //Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
                     //sfd.RestoreDirectory = true;
                     //sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";
@@ -342,7 +341,6 @@ namespace Har_reader
                     AlertSignalOn = false;
                     Counter_lowers = 0;
                     Client.StopClient();
-                    SaveTimer.Stop();
                 },
                 (obj) => true
                 );

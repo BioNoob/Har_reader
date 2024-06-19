@@ -85,7 +85,7 @@ namespace Har_reader.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
         public int AutoSaveTime {
             get {
                 return ((int)(this["AutoSaveTime"]));

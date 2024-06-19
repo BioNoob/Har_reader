@@ -59,9 +59,12 @@ namespace Har_reader
             var request = Service.Spreadsheets.Get(SpreadSheetId);
             var response = request.Execute();
             DocSheets = response.Sheets.ToList();
-            var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"{MySheet.Properties.Title}!A2:A").Execute();
-            if (val.Values != null)
-                Saved = val.Values.Select(t => long.Parse(t[0].ToString())).ToList();
+            if (MySheet != null)
+            {
+                var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"{MySheet.Properties.Title}!A2:A").Execute();
+                if (val.Values != null)
+                    Saved = val.Values.Select(t => long.Parse(t[0].ToString())).ToList();
+            }
         }
         public async void DoSheetSave(IEnumerable<_webSocketMessages> mess)
         {

@@ -1,19 +1,18 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
-using Websocket.Client;
-using System.Timers;
-using Timer = System.Timers.Timer;
 using System.Threading.Tasks;
-using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System.Globalization;
-using Newtonsoft.Json.Linq;
+using System.Timers;
+using Websocket.Client;
+using Timer = System.Timers.Timer;
 
 namespace Har_reader
 {

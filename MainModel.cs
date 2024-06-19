@@ -1,16 +1,11 @@
-﻿using CsvHelper;
-using CsvHelper.Configuration;
-using Har_reader.Properties;
+﻿using Har_reader.Properties;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Media;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Windows.Data;
 
 namespace Har_reader

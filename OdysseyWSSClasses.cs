@@ -1,9 +1,6 @@
-﻿using CsvHelper.Configuration;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 
@@ -324,14 +321,6 @@ namespace Har_reader
                 default:
                     break;
             }
-        }
-    }
-    public sealed class FooMap : ClassMap<_webSocketMessages>
-    {
-        public FooMap()
-        {
-            Map(m => m.Time_normal);
-            Map(m => m.GetCrashData.Game_crash_normal);
         }
     }
 }

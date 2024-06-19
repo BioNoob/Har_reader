@@ -107,7 +107,7 @@ namespace Har_reader
                   var a = id_mess.FirstOrDefault(t => t.MsgType == IncomeMessageType.game_crash);
                   if (a != null)
                   {
-                      a.ProfitData = id_mess.Any(t => t.ProfitData != 0) ? mess.Single(t => t.ProfitData != 0).ProfitData : 0;
+                      a.ProfitData = id_mess.Any(t => t.ProfitData != 0) ? id_mess.Single(t => t.ProfitData != 0).ProfitData : 0;
                       aq.Add(a);
                   }
               });

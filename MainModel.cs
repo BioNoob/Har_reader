@@ -163,14 +163,14 @@ namespace Har_reader
                     HandledBet = false;
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
-                    mess.ReviewData = $"Win {mess.ProfitData.ToString(CultureInfo.InvariantCulture)}";
+                    mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
                     p_lose.Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
-                    mess.ReviewData = $"Lose {CurrBet.BetVal.ToString(CultureInfo.InvariantCulture)}";
+                    mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.connected:

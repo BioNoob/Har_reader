@@ -237,7 +237,7 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     GameId = (int)JObject.Parse(Data).SelectToken("game_id");
                     GetProfileData = JsonConvert.DeserializeObject<Profile>(JObject.Parse(Data).SelectToken("user").ToString());
-                    ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.00", CultureInfo.InvariantCulture)}";
+                    ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.000", CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/profile.png";
                     break;
                 case IncomeMessageType.game_crash:
@@ -252,35 +252,50 @@ namespace Har_reader
                     if (dop_info is long @int)
                     {
                         GetTickdData = new TickMess();
-                        if (t.SelectToken("cashouts") is JObject)
+
+                        var z = t.SelectToken("cashouts").Children().ToList();
+                        foreach (var item in z)
                         {
-                            var z = t.SelectToken("cashouts").Children().Single().ToString();
-                            var str1 = z.ToString().Trim().Split(":");
-                            if (long.Parse(str1[0].Trim('\"')) == @int)
+                            var itstr = item.ToString().Trim().Split(":");
+                            if (long.Parse(itstr[0].Trim('\"')) == @int)
                             {
                                 CashOuts w = new CashOuts();
-                                w.Id = @int;//long.Parse(str1[0].Trim());
-                                w.Value = double.Parse(str1[1].Trim());
+                                w.Id = @int;
+                                w.Value = double.Parse(itstr[1], CultureInfo.InvariantCulture);
                                 GetTickdData.MyCashOut = w;
+                                break;
                             }
                         }
-                        else if (t.SelectToken("cashouts") is JArray)
-                        {
 
-                            var z = t.SelectToken("cashouts").Children().ToList();
-                            foreach (var item in z)
-                            {
-                                var itstr = item.ToString().Trim().Split(":");
-                                if (long.Parse(itstr[0].Trim('\"')) == @int)
-                                {
-                                    CashOuts w = new CashOuts();
-                                    w.Id = @int;
-                                    w.Value = double.Parse(itstr[1]);
-                                    GetTickdData.MyCashOut = w;
-                                    break;
-                                }
-                            }
-                        }
+                        //if (t.SelectToken("cashouts") is JObject)
+                        //{
+                        //    var z = t.SelectToken("cashouts").Children().Single().ToString();
+                        //    var str1 = z.ToString().Trim().Split(":");
+                        //    if (long.Parse(str1[0].Trim('\"')) == @int)
+                        //    {
+                        //        CashOuts w = new CashOuts();
+                        //        w.Id = @int;//long.Parse(str1[0].Trim());
+                        //        w.Value = double.Parse(str1[1].Trim());
+                        //        GetTickdData.MyCashOut = w;
+                        //    }
+                        //}
+                        //else if (t.SelectToken("cashouts") is JArray)
+                        //{
+
+                        //    var z = t.SelectToken("cashouts").Children().ToList();
+                        //    foreach (var item in z)
+                        //    {
+                        //        var itstr = item.ToString().Trim().Split(":");
+                        //        if (long.Parse(itstr[0].Trim('\"')) == @int)
+                        //        {
+                        //            CashOuts w = new CashOuts();
+                        //            w.Id = @int;
+                        //            w.Value = double.Parse(itstr[1]);
+                        //            GetTickdData.MyCashOut = w;
+                        //            break;
+                        //        }
+                        //    }
+                        //}
                     }
                     ImgPath = "Resources/win.png";
                     break;
@@ -289,14 +304,14 @@ namespace Har_reader
                     var str = Data.TrimStart('[').TrimEnd(']').Trim().Split(",");
                     GetBetsMessageData.UserId = long.Parse(str[0].Trim());
                     GetBetsMessageData.UserName = str[1].Trim();
-                    GetBetsMessageData.BetValue = long.Parse(str[2].Trim());
+                    GetBetsMessageData.BetValue = double.Parse(str[2].Trim(), CultureInfo.InvariantCulture);
                     GetBetAccData = new Bet() { JAmount = (long)GetBetsMessageData.BetValue, CashOut = 100 };
-                    ReviewData = $"Bet {GetBetAccData.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut ? x";
+                    ReviewData = $"Bet {GetBetAccData.BetVal.ToString("0.##", CultureInfo.InvariantCulture)} CashOut ? x";
                     ImgPath = "Resources/chip.png";
                     break;
                 case IncomeMessageType.bet_accepted:
                     GetBetAccData = JsonConvert.DeserializeObject<Bet>(JObject.Parse(Data).SelectToken("bet").ToString());
-                    ReviewData = $"Bet {GetBetAccData.BetVal.ToString(CultureInfo.InvariantCulture)} CashOut {GetBetAccData.CashOut.ToString(CultureInfo.InvariantCulture)}x";
+                    ReviewData = $"Bet {GetBetAccData.BetVal.ToString("0.##", CultureInfo.InvariantCulture)} CashOut {GetBetAccData.CashOut.ToString(CultureInfo.InvariantCulture)}x";
                     ImgPath = "Resources/chip.png";
                     break;
                 case IncomeMessageType.lose:

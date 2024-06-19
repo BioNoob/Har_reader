@@ -165,7 +165,7 @@ namespace Har_reader
                 valgetreq.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.FORMULA;
                 var formula = valgetreq.Execute().Values[0][0].ToString();
                 //докинули в формулу сбоку новый лист по юзеру
-                formula = formula.Replace("};", $"{MyUserName}!A2:B" + "};");
+                formula = formula.Replace("};", $";{MyUserName}!A2:B" + "};");
                 UpdateCellsRequest ucr = new UpdateCellsRequest();
                 ucr.Fields = "*";
                 ucr.Rows = new List<RowData>();

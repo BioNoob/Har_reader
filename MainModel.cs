@@ -32,10 +32,11 @@ namespace Har_reader
         private Bet CurrBet = null;
         private int crashCount;
         private int autosavecounter;
-        SoundPlayer p_win = new SoundPlayer(Resources.win);
-        SoundPlayer p_lose = new SoundPlayer(Resources.lose);
         private string saveStatus;
+        private string timerStatus;
+        private SoundControlModel sM;
 
+        public string TimerStatus { get => timerStatus; set => SetProperty(ref timerStatus, value); }
         public string SaveStatus { get => saveStatus; set => SetProperty(ref saveStatus, value); }
         private OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
         private GoogleApi gp { get; set; }
@@ -49,16 +50,17 @@ namespace Har_reader
             set
             {
                 SetProperty(ref alertsignalon, value);
-                DoAlertBlink?.Invoke(value);
+                DoAlertBlink?.Invoke(value, SM.GetSound(SoundControlModel.SoundEnum.AlertSnd));
             }
         }
         public string Status { get => status; set => SetProperty(ref status, value); }
         public int LowerCheckValue { get => lowerCheckValue; set => SetProperty(ref lowerCheckValue, value); }
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
-        public delegate void AlertBlink(bool blink);
+        public delegate void AlertBlink(bool blink, SoundPlayer sound);
         public event AlertBlink DoAlertBlink;
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
+        public SoundControlModel SM { get => sM; set => SetProperty(ref sM, value); }
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
         public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
         public int CurrSaveCounter { get; set; } = 0;
@@ -67,6 +69,7 @@ namespace Har_reader
         {
             Answer.CollectionChanged += Answer_CollectionChanged;
             BM = new BetsModel();
+            SM = new SoundControlModel();
             BM.OnReqBet += BM_OnReqBet;
             BM.AlertValCounter = Settings.Default.AlertVal;
             BM.LowerCheckVal = Settings.Default.LowerVal;
@@ -84,9 +87,25 @@ namespace Har_reader
             Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
+            Client.TimerUpdated += Client_TimerUpdated;
             gp = new GoogleApi();
             gp.StatusChanged += Gp_StatusChanged;
+            TimerStatus = "Wait new round";
         }
+
+        private void Client_TimerUpdated(TimerMess type, double val)
+        {
+            switch (type)
+            {
+                case TimerMess.fly:
+                    TimerStatus = val.ToString("0.00x", CultureInfo.InvariantCulture);
+                    break;
+                case TimerMess.start:
+                    TimerStatus = val.ToString("0.00s", CultureInfo.InvariantCulture);
+                    break;
+            }
+        }
+
         private void Gp_StatusChanged(string txt)
         {
             SaveStatus = txt;
@@ -154,7 +173,7 @@ namespace Har_reader
                 case IncomeMessageType.tick:
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
-                    p_win.Play();
+                    SM.GetSound(SoundControlModel.SoundEnum.WinSnd);
                     HandledBet = false;
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
@@ -162,7 +181,7 @@ namespace Har_reader
                     Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
-                    p_lose.Play();
+                    SM.GetSound(SoundControlModel.SoundEnum.LoseSnd);
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
@@ -277,6 +296,7 @@ namespace Har_reader
                 return _exitcommand ??= new CommandHandler(obj =>
                 {
                     Client.StopClient();
+                    SM.SaveSettings();
                     Settings.Default.AlertVal = BM.AlertValCounter;
                     Settings.Default.LowerVal = BM.LowerCheckVal;
                     Settings.Default.BetVal = BM.Bet.BetVal;
@@ -354,6 +374,8 @@ namespace Har_reader
                 return;
             }
         }
+
+
 
 
 

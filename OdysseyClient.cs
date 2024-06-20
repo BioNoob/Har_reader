@@ -3,6 +3,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.WebSockets;
@@ -40,6 +41,11 @@ namespace Har_reader
         connected,
         disconnected
     }
+    public enum TimerMess
+    {
+        fly,
+        start
+    }
     public interface IStatusSender
     {
         public delegate void SendStatus(string txt);
@@ -48,24 +54,35 @@ namespace Har_reader
     public class OdysseyClient : Proper, IStatusSender
     {
         private Timer _timer = new Timer(1000);
+        private Timer expired_timer = new Timer(50);
         private ManualResetEvent exitEvent = new ManualResetEvent(false);
         private WebsocketClient client = new WebsocketClient(new Uri("wss://ton-rocket-server.pfplabs.xyz/"));
         private const string _init_mess = "{\"type\":\"join\",\"data\":{\"initData\":\"\",\"browserInitData\":{\"token\":\"" + "ECHO" + "\",\"locale\":\"en\"}}}";
         private string init_mess = "";
         private static readonly object GATE1 = new object();
         private int counter_of_sec = 0;
+        private int gip_count = 0;
+        private TimerMess curr_timer;
+        private double flytime = 0;
         private long MyId;
         private bool gameInProgress;
         private List<string> PresetStatusBet = new List<string> { "Game in progress", "Game in progress.", "Game in progress..", "Game in progress...", "Game in progress...." };
         private List<string> PresetStatusConn = new List<string> { "Connecting", "Connecting.", "Connecting..", "Connecting...", "Connecting...." };
         private bool haveActiveBet;
         private bool authDone;
+        public delegate void GetedMessage(IncomeMessageType type, _webSocketMessages mess);
+        public event GetedMessage MessageGeted;
+        public event IStatusSender.SendStatus StatusChanged;
+        public delegate void TimerDelegate(TimerMess type, double val);
+        public event TimerDelegate TimerUpdated;
+        TimerMess Curr_timer { get => curr_timer; set { curr_timer = value; flytime = 0; expired_timer.Start(); } }
         public bool GameInProgress { get => gameInProgress; set => SetProperty(ref gameInProgress, value); }
         public bool HaveActiveBet { get => haveActiveBet; set => SetProperty(ref haveActiveBet, value); }
         private bool AuthDone { get => authDone; set => SetProperty(ref authDone, value); }
         private long GameID { get; set; }
         public OdysseyClient()
         {
+            expired_timer.Elapsed += Exp_Elapsed;
             _timer.Elapsed += _timer_Elapsed;
             _timer.AutoReset = true;
             GameInProgress = true;
@@ -91,7 +108,8 @@ namespace Har_reader
                 .Synchronize(GATE1)
                 .Subscribe(t =>
                 {
-                    GameInProgress = false; 
+                    GameInProgress = false;
+                    Curr_timer = TimerMess.start;
                     JObject o = JObject.Parse(t.Text);
                     GameID = (long)o.SelectToken("data").SelectToken("game_id");
                     StatusChanged?.Invoke("Run is starting");
@@ -107,7 +125,13 @@ namespace Har_reader
                 .Where(t => t.Text.Contains("\"type\":\"game_started\""))
                 .ObserveOn(TaskPoolScheduler.Default)
                 .Synchronize(GATE1)
-                .Subscribe(t => { GameInProgress = true; StatusChanged?.Invoke("Run is started"); });
+                .Subscribe(t =>
+                {
+                    GameInProgress = true;
+                    expired_timer.Stop();
+                    Curr_timer = TimerMess.fly;
+                    StatusChanged?.Invoke("Run is started");
+                });
             client.MessageReceived
                 .Where(t => !string.IsNullOrEmpty(t.Text))
                 .Where(t => t.Text.Contains("\"type\":\"bet_accepted\""))
@@ -121,6 +145,31 @@ namespace Har_reader
                 .Synchronize(GATE1)
                 .Subscribe(BetsMsgRecived);
         }
+
+        private double CalcFly()
+        {
+            return Math.Floor(100 * Math.Pow(Math.E, 6e-5 * flytime)) / 100;
+        }
+        private double CalcStart()
+        {
+            return 5 - (flytime / 1000);
+        }
+        private void Exp_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            flytime += 50;
+            switch (Curr_timer)
+            {
+                case TimerMess.fly:
+                    TimerUpdated?.Invoke(Curr_timer, CalcFly());
+                    break;
+                case TimerMess.start:
+                    TimerUpdated?.Invoke(Curr_timer, CalcStart());
+                    break;
+            }
+            //var ttt = 
+            //Debug.WriteLine($"{ttt.ToString("0.00", CultureInfo.InvariantCulture)}x");
+        }
+
 
         private async void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
@@ -143,9 +192,6 @@ namespace Har_reader
 
             }
         }
-        public delegate void GetedMessage(IncomeMessageType type, _webSocketMessages mess);
-        public event GetedMessage MessageGeted;
-        public event IStatusSender.SendStatus StatusChanged;
 
         private void GetHistory(_webSocketMessages auth_data)
         {
@@ -170,7 +216,6 @@ namespace Har_reader
                 AuthDone = true;
             }
         }
-        int gip_count = 0;
         private void MyCashOutMsgRecived(ResponseMessage msg)
         {
             if (!AuthDone) return;
@@ -208,6 +253,8 @@ namespace Har_reader
         private void CrashMessageRecived(ResponseMessage msg)
         {
             if (!AuthDone) return;
+            expired_timer.Stop();
+            flytime = 0;
             MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text, GameID));
             StatusChanged?.Invoke("Crush!");
             if (HaveActiveBet)
@@ -244,6 +291,8 @@ namespace Har_reader
         {
             if (client.IsStarted)
             {
+                expired_timer.Stop();
+                flytime = 0;
                 AuthDone = false;
                 HaveActiveBet = false;
                 GameInProgress = false;

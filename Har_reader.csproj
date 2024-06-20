@@ -34,6 +34,7 @@
     <None Remove="Resources\minimize.png" />
     <None Remove="Resources\mute.png" />
     <None Remove="Resources\odyseeyproj-4a113e813b35.json" />
+    <None Remove="Resources\play.png" />
     <None Remove="Resources\profile.png" />
     <None Remove="Resources\punk-token.png" />
     <None Remove="Resources\win.png" />
@@ -55,6 +56,7 @@
     <EmbeddedResource Include="Resources\lose.wav" />
     <Resource Include="Resources\minimize.png" />
     <Resource Include="Resources\mute.png" />
+    <Resource Include="Resources\play.png" />
     <Resource Include="Resources\profile.png" />
     <Resource Include="Resources\punk-token.png" />
     <Resource Include="Resources\win.png" />

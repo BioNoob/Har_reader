@@ -55,8 +55,11 @@
                 <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
                 <Label Content="{Binding Profile.Balance.NormalPunk}" ContentStringFormat="{}{0:#0.000}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
             </Grid>
-            <local:BetControl Grid.Column="2" Grid.RowSpan="3" Grid.Row="1" x:Name="BetCntrl" DataContext="{Binding BM}"
+            <StackPanel Grid.Column="2" Grid.RowSpan="2" Grid.Row="1">
+                <local:BetControl  x:Name="BetCntrl" DataContext="{Binding BM}"
                               VerticalAlignment="Top"/>
+                <local:SoundControl Grid.Column="2" Grid.Row="2" DataContext="{Binding SM}"/>
+            </StackPanel>
             <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>
@@ -64,6 +67,7 @@
                     <ColumnDefinition Width="auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
@@ -113,12 +117,14 @@
             </Button>-->
                 <Label Grid.Row="1" Height="20" Content="Status:" Padding="0" VerticalContentAlignment="Center" 
                        HorizontalContentAlignment="Right" Margin="0,5,0,0"/>
-                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="FilePath" HorizontalAlignment="Stretch" 
+                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="1" x:Name="FilePath" HorizontalAlignment="Stretch" 
                     TextWrapping="WrapWithOverflow" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="5,5,0,0"
                            Text="{Binding Status}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" TextAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                           Margin="5,5,0,0" Text="{Binding TimerStatus}"/>
             </Grid>
             <DataGrid MinWidth="450" SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding Answer}" IsReadOnly="True"
-            Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False"
+            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False"
                       VerticalScrollBarVisibility="Visible" HorizontalGridLinesBrush="DarkGray">
                 <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Тип" Width="25" MinWidth="40">
@@ -129,7 +135,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTextColumn Header="ID Игры" Binding="{Binding GameId, Mode=OneTime}" MinWidth="50" />
-                    <DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" MinWidth="145" />
+                    <!--<DataGridTextColumn Header="Время UTC" Binding="{Binding Time_normal, Mode=OneTime}" MinWidth="145" />-->
                     <DataGridTextColumn Header="Значение" Binding="{Binding ReviewData, Mode=OneTime}" MinWidth="155" Width="*"/>
                 </DataGrid.Columns>
                 <DataGrid.RowStyle>

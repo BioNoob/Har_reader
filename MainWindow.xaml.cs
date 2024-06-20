@@ -14,7 +14,7 @@ namespace Har_reader
     /// </summary>
     public partial class MainWindow : Window
     {
-        SoundPlayer p = new SoundPlayer(Properties.Resources.alert);
+        SoundPlayer p = new SoundPlayer();
         [DllImport("user32")] private static extern int FlashWindow(IntPtr hwnd, bool bInvert);
         WindowInteropHelper wih;
         Timer t;
@@ -44,8 +44,9 @@ namespace Har_reader
                 FlashWindow(wih.Handle, true);
             }));
         }
-        private void MainWindow_DoAlertBlink(bool blink)
+        private void MainWindow_DoAlertBlink(bool blink, SoundPlayer sp)
         {
+            p = sp;
             if (blink)
             {
                 T_Elapsed(null, null);

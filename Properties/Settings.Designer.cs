@@ -94,5 +94,77 @@ namespace Har_reader.Properties {
                 this["AutoSaveTime"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AlertPathWav {
+            get {
+                return ((string)(this["AlertPathWav"]));
+            }
+            set {
+                this["AlertPathWav"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LosePathWav {
+            get {
+                return ((string)(this["LosePathWav"]));
+            }
+            set {
+                this["LosePathWav"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WinPathWav {
+            get {
+                return ((string)(this["WinPathWav"]));
+            }
+            set {
+                this["WinPathWav"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AlertUseDef {
+            get {
+                return ((bool)(this["AlertUseDef"]));
+            }
+            set {
+                this["AlertUseDef"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool WinUseDef {
+            get {
+                return ((bool)(this["WinUseDef"]));
+            }
+            set {
+                this["WinUseDef"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool LoseUseDef {
+            get {
+                return ((bool)(this["LoseUseDef"]));
+            }
+            set {
+                this["LoseUseDef"] = value;
+            }
+        }
     }
 }

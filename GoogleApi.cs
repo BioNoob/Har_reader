@@ -66,7 +66,7 @@ namespace Har_reader
                     Saved = val.Values.Select(t => long.Parse(t[0].ToString())).ToList();
             }
         }
-        public async void DoSheetSave(IEnumerable<_webSocketMessages> mess)
+        public async void DoSheetSave(IEnumerable<UnitedSockMess> mess)
         {
             await Task.Run(() =>
             {
@@ -86,14 +86,14 @@ namespace Har_reader
                 SaveInProgress = true;
                 if (Service is null)
                     SetConnAndRead();
-                InsertLogData(mess.Where(t => buf.Contains(t.GameId)));
+                InsertLogData(mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null));
                 Saved.AddRange(buf);
                 StatusChanged?.Invoke("Saved!");
                 SaveInProgress = false;
             });
 
         }
-        private void InsertLogData(IEnumerable<_webSocketMessages> mess)
+        private void InsertLogData(IEnumerable<UnitedSockMess> mess)
         {
             CheckSheetsExist();
             StatusChanged?.Invoke("Generate insert request");
@@ -102,19 +102,18 @@ namespace Har_reader
             aprq.SheetId = MySheet.Properties.SheetId;
             aprq.Fields = "*";//"userEnteredValue";
             aprq.Rows = new List<RowData>();
-            //var aq = mess.OrderBy(t => t.GameId).Where(t => t.MsgType != IncomeMessageType.connected 
-            var aq = new List<_webSocketMessages>();
-            mess.Select(o => o.GameId).Distinct().ToList().ForEach(w =>
-              {
-                  var id_mess = mess.Where(t => t.GameId == w);
-                  var a = id_mess.FirstOrDefault(t => t.MsgType == IncomeMessageType.game_crash);
-                  if (a != null)
-                  {
-                      a.ProfitData = id_mess.Any(t => t.ProfitData != 0) ? id_mess.Single(t => t.ProfitData != 0).ProfitData : 0;
-                      aq.Add(a);
-                  }
-              });
-            aq = new List<_webSocketMessages>(aq.OrderBy(t => t.GameId));
+            var aq = new List<UnitedSockMess>();
+            //mess.Select(o => o.GameId).Distinct().ToList().ForEach(w =>
+            //  {
+            //      var id_mess = mess.Where(t => t.GameId == w);
+            //      var a = id_mess.FirstOrDefault(t => t.MsgType == IncomeMessageType.game_crash);
+            //      if (a != null)
+            //      {
+            //          a.ProfitData = id_mess.Any(t => t.ProfitData != 0) ? id_mess.Single(t => t.ProfitData != 0).ProfitData : 0;
+            //          aq.Add(a);
+            //      }
+            //  });
+            aq = new List<UnitedSockMess>(mess.OrderBy(t => t.GameId));
             foreach (var item in aq)
             {
                 RowData row = new RowData();
@@ -126,16 +125,16 @@ namespace Har_reader
                 //}
                 //);
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } });
-                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GetCrashData.Game_crash_normal } });
-                if (item.ProfitData < 0)
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameCrash } });
+                if (item.Profit < 0)
                 {
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.ProfitData } });
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });
                     row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
                 }
-                if (item.ProfitData > 0)
+                if (item.Profit > 0)
                 {
                     row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.ProfitData } });
+                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });
                 }
                 aprq.Rows.Add(row);
             }

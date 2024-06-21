@@ -33,7 +33,7 @@ namespace Har_reader
     {
         initial_data,
         game_crash,
-        tick,
+        win,
         bet_accepted,
         bets,
         lose,
@@ -228,7 +228,7 @@ namespace Har_reader
                 if (msg.Text.Contains(MyId.ToString()))
                 {
                     HaveActiveBet = false;
-                    MessageGeted?.Invoke(IncomeMessageType.tick, _webSocketMessages.FromJson(msg.Text, GameID, MyId));
+                    MessageGeted?.Invoke(IncomeMessageType.win, _webSocketMessages.FromJson(msg.Text, GameID, MyId));
                 }
             }
         }

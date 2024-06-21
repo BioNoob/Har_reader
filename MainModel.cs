@@ -14,11 +14,10 @@ namespace Har_reader
     public class MainModel : Proper
     {
         private int counter_lowers;
-        private ObservableCollection<_webSocketMessages> answer = new ObservableCollection<_webSocketMessages>();
+        private ObservableCollection<UnitedSockMess> usmes = new ObservableCollection<UnitedSockMess>();
         private string token;
         private bool alertsignalon;
         private string status;
-        private int lowerCheckValue;
         private bool is_connected = false;
         private bool permition_to_save = false;
         private OdysseyClient client;
@@ -42,7 +41,7 @@ namespace Har_reader
         private GoogleApi gp { get; set; }
         public Profile Profile { get => profile; set => SetProperty(ref profile, value); }
         public string Token { get => token; set => SetProperty(ref token, value); }
-        public ObservableCollection<_webSocketMessages> Answer { get => answer; set => SetProperty(ref answer, value); }
+        public ObservableCollection<UnitedSockMess> USmes { get => usmes; set => SetProperty(ref usmes, value); }
         public int Counter_lowers { get => counter_lowers; set => SetProperty(ref counter_lowers, value); }
         public bool AlertSignalOn
         {
@@ -54,7 +53,6 @@ namespace Har_reader
             }
         }
         public string Status { get => status; set => SetProperty(ref status, value); }
-        public int LowerCheckValue { get => lowerCheckValue; set => SetProperty(ref lowerCheckValue, value); }
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
         public delegate void AlertBlink(bool blink, SoundPlayer sound);
         public event AlertBlink DoAlertBlink;
@@ -67,7 +65,7 @@ namespace Har_reader
         private bool HandledBet { get; set; } = false;
         public MainModel()
         {
-            Answer.CollectionChanged += Answer_CollectionChanged;
+            USmes.CollectionChanged += USmes_CollectionChanged;
             BM = new BetsModel();
             SM = new SoundControlModel();
             BM.OnReqBet += BM_OnReqBet;
@@ -80,7 +78,7 @@ namespace Har_reader
             SaveStatus = "Hello, I'm save status";
             Status = "Hello, Im'a status";
             object lockObj = new object();
-            BindingOperations.EnableCollectionSynchronization(Answer, lockObj);
+            BindingOperations.EnableCollectionSynchronization(USmes, lockObj);
             Client = new OdysseyClient();
             Profile = new Profile();
             Profile.Username = "NULL";
@@ -91,6 +89,27 @@ namespace Har_reader
             gp = new GoogleApi();
             gp.StatusChanged += Gp_StatusChanged;
             TimerStatus = "Wait new round";
+        }
+
+        private void USmes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            int last = CrashCount;
+            CrashCount = USmes.Count();
+            CurrSaveCounter += CrashCount - last;
+            if (AutoSaveCounter != 0 && permition_to_save)
+            {
+                if (CurrSaveCounter >= AutoSaveCounter)
+                {
+                    gp.DoSheetSave(USmes);
+                    CurrSaveCounter = 0;
+                }
+                else
+                {
+                    if (!gp.SaveInProgress)
+                        SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
+                }
+            }
+            ExpEnabled = CrashCount > 0 ? true : false;
         }
 
         private void Client_TimerUpdated(TimerMess type, double val)
@@ -115,9 +134,6 @@ namespace Har_reader
             HandledBet = true;
             Client.PlaceBet(tobet);
         }
-
-
-
         private void Client_MessageGeted(IncomeMessageType type, _webSocketMessages mess)
         {
             switch (type)
@@ -125,15 +141,12 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
                     gp.SetProfile(Profile);
-                    Answer.Insert(0, mess);
-                    permition_to_save = true;
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
                         BM.BetsEnabled = true;
                     //Узнали меньше ли оно требования
                     mess.GetCrashData.Lower = mess.GetCrashData.Game_crash_normal <= BM.LowerCheckVal;
-                    Answer.Insert(0, mess);
                     //счетчик, если меньше увеличили на 1, по идее если нет, то скинули в 0
                     Counter_lowers = mess.GetCrashData.Lower ? Counter_lowers + 1 : 0;
                     //если досчитали до требования то бьем тревогу, и там еще и ставку по требованию делаем
@@ -158,7 +171,6 @@ namespace Har_reader
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.bet_accepted:
                     if (!HandledBet)
@@ -168,24 +180,21 @@ namespace Har_reader
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    Answer.Insert(0, mess);
                     break;
-                case IncomeMessageType.tick:
+                case IncomeMessageType.win:
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
-                    SM.GetSound(SoundControlModel.SoundEnum.WinSnd);
+                    SM.GetSound(SoundControlModel.SoundEnum.WinSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.lose:
-                    SM.GetSound(SoundControlModel.SoundEnum.LoseSnd);
+                    SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    Answer.Insert(0, mess);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;
@@ -198,32 +207,27 @@ namespace Har_reader
                 default:
                     break;
             }
+            if (mess is null)
+                return;
+            if (USmes.Any(w => w.GameId == mess.GameId))
+            {
+                USmes.Single(w => w.GameId == mess.GameId).SetDataByMess(type, mess);
+            }
+            else
+            {
+                var x = new UnitedSockMess(mess.GameId);
+                x.SetDataByMess(type, mess);
+                USmes.Insert(0, x);
+            }
+            if (type == IncomeMessageType.game_crash)
+                permition_to_save = true;
+            else
+                permition_to_save = false;
         }
 
         private void Client_StatusChanged(string txt)
         {
             Status = txt;
-        }
-
-        private void Answer_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            int last = CrashCount;
-            CrashCount = Answer.Where(t => t.MsgType == IncomeMessageType.game_crash).Count();
-            CurrSaveCounter += CrashCount - last;
-            if (AutoSaveCounter != 0 && permition_to_save)
-            {
-                if (CurrSaveCounter >= AutoSaveCounter)
-                {
-                    gp.DoSheetSave(Answer);
-                    CurrSaveCounter = 0;
-                }
-                else
-                {
-                    if (!gp.SaveInProgress)
-                        SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
-                }
-            }
-            ExpEnabled = CrashCount > 0 ? true : false;
         }
         public CommandHandler ConnectCommand
         {
@@ -233,7 +237,7 @@ namespace Har_reader
                 {
                     if (!string.IsNullOrWhiteSpace(Token))
                     {
-                        Answer.Clear();
+                        USmes.Clear();
                         //Status = "Connecting..";
                         await Task.Run(() => connect());
                     }
@@ -296,6 +300,7 @@ namespace Har_reader
                 return _exitcommand ??= new CommandHandler(obj =>
                 {
                     Client.StopClient();
+                    gp.DoSheetSave(USmes);
                     SM.SaveSettings();
                     Settings.Default.AlertVal = BM.AlertValCounter;
                     Settings.Default.LowerVal = BM.LowerCheckVal;
@@ -317,8 +322,7 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
-                    if (permition_to_save)
-                        gp.DoSheetSave(Answer);
+                    gp.DoSheetSave(USmes);
                     //Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
                     //sfd.RestoreDirectory = true;
                     //sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";

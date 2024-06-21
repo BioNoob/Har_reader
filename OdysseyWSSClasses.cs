@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Windows.Media;
 
 namespace Har_reader
 {
@@ -142,6 +143,102 @@ namespace Har_reader
         public DateTime Normal_created => DateTime.ParseExact(created, "yyyy-MM-dd'T'HH:mm:ss.FFF'Z'", CultureInfo.InvariantCulture).AddHours(3);
         public _webSocketMessages GetMess => _webSocketMessages.FromJson("{\"type\":\"game_crash\",\"data\":{\"elapsed\":7834,\"game_crash\":" + game_crash + "}}", game_id, Normal_created);
     }
+    public class UnitedSockMess : Message
+    {
+        private long gameId;
+        private double betVal;
+        private double betCashOut;
+        private double profit;
+        private string statusImage;
+        private string dopData;
+        private double? gameCrash;
+        private bool gameCrashLower;
+        private string profitStr;
+
+        /*
+* 1 Добавили запись при старте игры (строка в таблице)
+* 2 Если делали ставку добавили ставку в строку таблицы
+* 3 Если Вин/Луз добавили в строку (img val)
+* 4 Добавили в строку
+*/
+        public long GameId { get => gameId; set => SetProperty(ref gameId, value); } //555989
+        public double BetVal { get => betVal; set => SetProperty(ref betVal, value); } // BET val, cash out if has
+        public double BetCashOut { get => betCashOut; set => SetProperty(ref betCashOut, value); } //
+        public string ProfitStr { get => profitStr; set => SetProperty(ref profitStr, value); }
+        public double Profit
+        {
+            get => profit;
+            set 
+            { 
+                SetProperty(ref profit, value);
+                if (ProfitPos == true)
+                    ProfitStr = $"+{value.ToString("#0.0#")} $P";
+                else if (ProfitPos == false)
+                    ProfitStr = $"-{value.ToString("#0.0#")} $P";
+                else if (ProfitPos == null)
+                    ProfitStr = $"";
+                SetProperty("ProfitPos"); 
+            }
+        }
+        public bool? ProfitPos
+        {
+            get
+            {
+                if (Profit > 0)
+                    return true;
+                else if (Profit < 0)
+                    return false;
+                else
+                    return null;
+            }
+        }
+
+        public string StatusImage { get => statusImage; set => SetProperty(ref statusImage, value); }
+        public double? GameCrash { get => gameCrash; set => SetProperty(ref gameCrash, value); }
+        public bool GameCrashLower { get => gameCrashLower; set => SetProperty(ref gameCrashLower, value); }
+        public string DopData { get => dopData; set => SetProperty(ref dopData, value); }
+        public UnitedSockMess(long game)
+        {
+            GameId = game;
+            GameCrash = null;
+        }
+        public void SetDataByMess(IncomeMessageType type, _webSocketMessages mes)
+        {
+            switch (type)
+            {
+                //case IncomeMessageType.initial_data:
+                //    StatusImage = "Resources/profile.png";
+                //    DopData = $"{mes.GetProfileData.Username} : {mes.GetProfileData.Balance.NormalPunk}";
+                //    break;
+                case IncomeMessageType.game_crash:
+                    StatusImage = "Resources/explosion.png";
+                    GameCrash = mes.GetCrashData.Game_crash_normal;
+                    GameCrashLower = mes.GetCrashData.Lower;
+                    break;
+                case IncomeMessageType.bet_accepted:
+                    StatusImage = "Resources/chip.png";
+                    BetVal = mes.GetBetAccData.BetVal;
+                    BetCashOut = mes.GetBetAccData.CashOut;
+                    DopData = $"{BetVal}$P : {BetCashOut}x";
+                    break;
+                case IncomeMessageType.bets:
+                    StatusImage = "Resources/chip.png";
+                    BetVal = mes.GetBetsMessageData.BetValue;
+                    BetCashOut = 0;
+                    DopData = $"{BetVal}$P";
+                    break;
+                case IncomeMessageType.lose:
+                    StatusImage = "Resources/lose.png";
+                    Profit = mes.ProfitData;
+                    break;
+                case IncomeMessageType.win:
+                    StatusImage = "Resources/win.png";
+                    Profit = mes.ProfitData;
+                    break;
+            }
+        }
+
+    }
     public class _webSocketMessages : Message
     {
         private string data;
@@ -194,7 +291,7 @@ namespace Har_reader
                     case "game_crash":
                         return IncomeMessageType.game_crash;
                     case "tick":
-                        return IncomeMessageType.tick;
+                        return IncomeMessageType.win;
                     case "bets":
                         return IncomeMessageType.bets;
                     case "bet_accepted":
@@ -244,7 +341,7 @@ namespace Har_reader
                     ReviewData = $"{GetCrashData.Game_crash_normal.ToString(CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/explosion.png";
                     break;
-                case IncomeMessageType.tick:
+                case IncomeMessageType.win:
                     var t = JObject.Parse(Data);
                     if (dop_info is long @int)
                     {
@@ -263,36 +360,6 @@ namespace Har_reader
                                 break;
                             }
                         }
-
-                        //if (t.SelectToken("cashouts") is JObject)
-                        //{
-                        //    var z = t.SelectToken("cashouts").Children().Single().ToString();
-                        //    var str1 = z.ToString().Trim().Split(":");
-                        //    if (long.Parse(str1[0].Trim('\"')) == @int)
-                        //    {
-                        //        CashOuts w = new CashOuts();
-                        //        w.Id = @int;//long.Parse(str1[0].Trim());
-                        //        w.Value = double.Parse(str1[1].Trim());
-                        //        GetTickdData.MyCashOut = w;
-                        //    }
-                        //}
-                        //else if (t.SelectToken("cashouts") is JArray)
-                        //{
-
-                        //    var z = t.SelectToken("cashouts").Children().ToList();
-                        //    foreach (var item in z)
-                        //    {
-                        //        var itstr = item.ToString().Trim().Split(":");
-                        //        if (long.Parse(itstr[0].Trim('\"')) == @int)
-                        //        {
-                        //            CashOuts w = new CashOuts();
-                        //            w.Id = @int;
-                        //            w.Value = double.Parse(itstr[1]);
-                        //            GetTickdData.MyCashOut = w;
-                        //            break;
-                        //        }
-                        //    }
-                        //}
                     }
                     ImgPath = "Resources/win.png";
                     break;

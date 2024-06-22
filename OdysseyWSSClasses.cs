@@ -60,12 +60,13 @@ namespace Har_reader
         private double elapsed;
         private double game_crash;
         private bool lower;
-
+        private CashOuts myCashOut;
         public double Elapsed { get => elapsed; set => SetProperty(ref elapsed, value); }
         public double Game_crash { get => game_crash; set => SetProperty(ref game_crash, value); }
         public double Game_crash_normal => Game_crash / 100d;
         [JsonIgnore]
         public bool Lower { get => lower; set => SetProperty(ref lower, value); }
+        public CashOuts MyCashOut { get => myCashOut; set => SetProperty(ref myCashOut, value); }
     }
     public partial class Balance : Proper
     {
@@ -168,16 +169,16 @@ namespace Har_reader
         public double Profit
         {
             get => profit;
-            set 
-            { 
+            set
+            {
                 SetProperty(ref profit, value);
                 if (ProfitPos == true)
                     ProfitStr = $"+{value.ToString("#0.0#")} $P";
                 else if (ProfitPos == false)
-                    ProfitStr = $"-{value.ToString("#0.0#")} $P";
+                    ProfitStr = $"{value.ToString("#0.0#")} $P";
                 else if (ProfitPos == null)
                     ProfitStr = $"";
-                SetProperty("ProfitPos"); 
+                SetProperty("ProfitPos");
             }
         }
         public bool? ProfitPos
@@ -223,7 +224,7 @@ namespace Har_reader
                     break;
                 case IncomeMessageType.bets:
                     StatusImage = "Resources/chip.png";
-                    BetVal = mes.GetBetsMessageData.BetValue;
+                    BetVal = mes.GetBetAccData.BetVal;
                     BetCashOut = 0;
                     DopData = $"{BetVal}$P";
                     break;
@@ -329,7 +330,7 @@ namespace Har_reader
             switch (MsgType)
             {
                 case IncomeMessageType.initial_data:
-                    GameId = (int)JObject.Parse(Data).SelectToken("game_id");
+                    GameId = (long)JObject.Parse(Data).SelectToken("game_id");
                     GetProfileData = JsonConvert.DeserializeObject<Profile>(JObject.Parse(Data).SelectToken("user").ToString());
                     ReviewData = $"{GetProfileData.Username} : {GetProfileData.Balance.NormalPunk.ToString("#0.000", CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/profile.png";
@@ -337,7 +338,24 @@ namespace Har_reader
                 case IncomeMessageType.game_crash:
                     if (dop_info is DateTime @date)
                         Time = ((DateTimeOffset)date).ToUnixTimeSeconds();
-                    GetCrashData = JsonConvert.DeserializeObject<game_crash_mess>(JObject.Parse(Data).ToString());
+                    var tok = JObject.Parse(Data);
+                    GetCrashData = JsonConvert.DeserializeObject<game_crash_mess>(tok.ToString());
+                    if (dop_info is long @lng)
+                    {
+                        var z = tok.SelectToken("cashouts").Children().ToList();
+                        foreach (var item in z)
+                        {
+                            var itstr = item.ToString().Trim().Split(":");
+                            if (long.Parse(itstr[0].Trim('\"')) == @lng)
+                            {
+                                CashOuts w = new CashOuts();
+                                w.Id = @lng;
+                                w.Value = double.Parse(itstr[1], CultureInfo.InvariantCulture);
+                                GetCrashData.MyCashOut = w;
+                                break;
+                            }
+                        }
+                    }
                     ReviewData = $"{GetCrashData.Game_crash_normal.ToString(CultureInfo.InvariantCulture)}";
                     ImgPath = "Resources/explosion.png";
                     break;

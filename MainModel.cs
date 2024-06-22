@@ -186,8 +186,8 @@ namespace Har_reader
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
                     SM.GetSound(SoundControlModel.SoundEnum.WinSnd).Play();
                     HandledBet = false;
-                    mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal;
-                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData);
+                    mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
+                    Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
                     break;
                 case IncomeMessageType.lose:

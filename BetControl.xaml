@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Har_reader"
              mc:Ignorable="d" FontFamily="Jura"
-             d:DesignHeight="215" d:DesignWidth="290" MinWidth="290">
+             d:DesignHeight="206" d:DesignWidth="290" MinWidth="290">
     <UserControl.DataContext>
         <local:BetsModel/>
     </UserControl.DataContext>
@@ -15,7 +15,7 @@
             <Setter Property="FontSize" Value="11"/>
         </Style>
     </UserControl.Resources>
-    <Grid Margin="5">
+    <Grid Margin="5,0,5,5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
@@ -116,7 +116,8 @@
             </TextBox>
             <Button Width="25" Grid.Column="2" Content="+" Command="{Binding ChangeAutoCasheVal}" CommandParameter="+"/>
         </Grid>
-        <Button Content="Force Bet" Grid.ColumnSpan="2" Grid.Row="5" Height="25" Margin="5,15" Padding="5,0" 
+        <Button Content="Force Bet" Grid.ColumnSpan="2" Grid.Row="5" Height="25" Margin="5,5" Padding="5,0" 
                 HorizontalAlignment="Center" Command="{Binding ForceBetCommand}" IsEnabled="{Binding BetsEnabled}"/>
+        <Rectangle Grid.Row="5" Grid.ColumnSpan="4" Stroke="Black" Height="1" StrokeThickness="4" VerticalAlignment="Bottom"/>
     </Grid>
 </UserControl>

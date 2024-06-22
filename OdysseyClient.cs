@@ -214,6 +214,19 @@ namespace Har_reader
                 GetHistory(xz);
                 MessageGeted?.Invoke(IncomeMessageType.initial_data, xz);
                 AuthDone = true;
+
+                var data = JObject.Parse(msg.Text).SelectToken("data");
+                long ell = (long)data.SelectToken("elapsed");
+                string status = data.SelectToken("state").ToString();
+                if(status == "IN_PROGRESS")
+                {
+                    flytime = ell;
+                    curr_timer = TimerMess.fly;
+                    expired_timer.Start();
+                }
+                //ЗАПУСТИТЬ ТАЙМЕР НА ПОЛЁт если летит
+
+                
             }
         }
         private void MyCashOutMsgRecived(ResponseMessage msg)
@@ -255,14 +268,22 @@ namespace Har_reader
             if (!AuthDone) return;
             expired_timer.Stop();
             flytime = 0;
-            MessageGeted?.Invoke(IncomeMessageType.game_crash, _webSocketMessages.FromJson(msg.Text, GameID));
+            var q = _webSocketMessages.FromJson(msg.Text, GameID, MyId);
             StatusChanged?.Invoke("Crush!");
             if (HaveActiveBet)
             {
-                var xz = new _webSocketMessages(GameID);
-                xz.HandSetData("lose");
-                MessageGeted?.Invoke(IncomeMessageType.lose, xz);
+                if (q.GetCrashData.MyCashOut is null)
+                {
+                    var xz = new _webSocketMessages(GameID);
+                    xz.HandSetData("lose");
+                    MessageGeted?.Invoke(IncomeMessageType.lose, xz);
+                }
+                else
+                {
+                    MessageGeted?.Invoke(IncomeMessageType.win, _webSocketMessages.FromJson(msg.Text, GameID, MyId));
+                }
             }
+            MessageGeted?.Invoke(IncomeMessageType.game_crash, q);
             HaveActiveBet = false;
 
         }

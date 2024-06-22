@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" FontFamily="Jura" WindowStyle="None" MouseDown="Window_MouseDown"
         xmlns:local="clr-namespace:Har_reader" KeyDown="Window_KeyDown" 
-        Title="Odyssey Monitor" Height="500" MinHeight="300" MinWidth="770" Width="550">
+        Title="Odyssey Monitor" Height="500" MinHeight="550" MinWidth="770" Width="550">
     <Window.Resources>
         <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 
                          AutoReverse="True" RepeatBehavior="Forever"/>
@@ -59,6 +59,7 @@
                 <local:BetControl  x:Name="BetCntrl" DataContext="{Binding BM}"
                               VerticalAlignment="Top"/>
                 <local:SoundControl Grid.Column="2" Grid.Row="2" DataContext="{Binding SM}"/>
+                <local:CalcBets Grid.Column="2" Grid.Row="3"/>
             </StackPanel>
             <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>

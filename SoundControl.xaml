@@ -19,7 +19,7 @@
     <UserControl.DataContext>
         <local:SoundControlModel/>
     </UserControl.DataContext>
-    <Grid Margin="0,0,5,0">
+    <Grid Margin="5,0,5,5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
@@ -32,9 +32,8 @@
             <RowDefinition Height="30"/>
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
-        <Rectangle Grid.Row="0" Grid.ColumnSpan="4" Stroke="Black" Height="1" StrokeThickness="4" Margin="5,0,0,0" VerticalAlignment="Top"/>
-        <Rectangle Grid.Row="3" Grid.ColumnSpan="4" Stroke="Black" Height="1" StrokeThickness="4" Margin="5,0,0,0" VerticalAlignment="Bottom"/>
-        <Label Content="Sound control" Padding="0" VerticalAlignment="Top" Margin="5,0,0,5" Grid.ColumnSpan="2" HorizontalAlignment="Stretch"/>
+        <Rectangle Grid.Row="3" Grid.ColumnSpan="4" Stroke="Black" Height="1" StrokeThickness="4" Margin="0,0,0,0" VerticalAlignment="Bottom"/>
+        <Label Content="Sound control" Padding="0" VerticalAlignment="Top"  Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
         <Label Content="Def." Padding="0" Grid.Column="2" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
         <Label Content="Alert sound" Grid.Row="1" Padding="0" Margin="5,0"/>
         <TextBox Grid.Row="1" Grid.Column="1" Margin="5" MouseDoubleClick="TextBox_MouseDoubleClick" Tag="A">

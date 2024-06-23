@@ -147,7 +147,7 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
                     gp.SetProfile(Profile);
-                    CBM.SetData(Profile.Balance.NormalPunk, null, null);
+                    //CBM.SetData(Profile.Balance.NormalPunk, null, null);
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
@@ -170,7 +170,7 @@ namespace Har_reader
                     {
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
-                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, null);
+                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.bets:
                     if (HandledBet)
@@ -179,7 +179,7 @@ namespace Har_reader
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.bet_accepted:
                     if (!HandledBet)
@@ -189,7 +189,7 @@ namespace Har_reader
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.win:
                     //WIN by AutoCashOut
@@ -199,14 +199,14 @@ namespace Har_reader
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.lose:
                     SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;

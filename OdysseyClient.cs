@@ -319,6 +319,7 @@ namespace Har_reader
                 GameInProgress = false;
                 MyId = -1;
                 StatusChanged?.Invoke("Disconnected");
+                
                 MessageGeted?.Invoke(IncomeMessageType.disconnected, null);
                 exitEvent.Set();
                 client.Stop(WebSocketCloseStatus.Empty, string.Empty);

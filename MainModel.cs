@@ -11,7 +11,7 @@ using System.Windows.Data;
 namespace Har_reader
 {
 
-    public class MainModel : Proper
+    public class MainModel : Proper, IBalanceDataSender
     {
         private int counter_lowers;
         private ObservableCollection<UnitedSockMess> usmes = new ObservableCollection<UnitedSockMess>();
@@ -27,6 +27,7 @@ namespace Har_reader
         private CommandHandler _disconnectCommand;
         private Profile profile;
         private BetsModel bM;
+        private CalcBetsModel cBM;
         private bool expEnabled;
         private Bet CurrBet = null;
         private int crashCount;
@@ -56,9 +57,12 @@ namespace Har_reader
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
         public delegate void AlertBlink(bool blink, SoundPlayer sound);
         public event AlertBlink DoAlertBlink;
+        public event IBalanceDataSender.DataDelegate DataUpdated;
+
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
         public SoundControlModel SM { get => sM; set => SetProperty(ref sM, value); }
+        public CalcBetsModel CBM { get => cBM; set => SetProperty(ref cBM, value); }
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
         public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
         public int CurrSaveCounter { get; set; } = 0;
@@ -68,6 +72,7 @@ namespace Har_reader
             USmes.CollectionChanged += USmes_CollectionChanged;
             BM = new BetsModel();
             SM = new SoundControlModel();
+            CBM = new CalcBetsModel();
             BM.OnReqBet += BM_OnReqBet;
             BM.AlertValCounter = Settings.Default.AlertVal;
             BM.LowerCheckVal = Settings.Default.LowerVal;
@@ -141,6 +146,8 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
                     gp.SetProfile(Profile);
+                    interface NOT WORKING;
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, null, null);
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
@@ -163,6 +170,7 @@ namespace Har_reader
                     {
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, null);
                     break;
                 case IncomeMessageType.bets:
                     if (HandledBet)
@@ -171,6 +179,7 @@ namespace Har_reader
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.bet_accepted:
                     if (!HandledBet)
@@ -180,6 +189,7 @@ namespace Har_reader
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.win:
                     //WIN by AutoCashOut
@@ -189,12 +199,14 @@ namespace Har_reader
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.lose:
                     SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
+                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;

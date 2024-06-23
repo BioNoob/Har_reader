@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 
 namespace Har_reader
 {
-    public class CalcBetsModel : Proper
+    public interface IBalanceDataSender
+    {
+        public delegate void DataDelegate(double balance, int? currLoseStrike, double? currBetAcc);
+        public event DataDelegate DataUpdated;
+    }
+    public class CalcBetsModel : Proper, IBalanceDataSender
     {
         private int stepS1 = 1;
         private int stepS2;
@@ -21,6 +26,8 @@ namespace Har_reader
         private double multiply = 2;
         private bool useData;
 
+        public event IBalanceDataSender.DataDelegate DataUpdated;
+
         public double Multiply { get => multiply; set { SetProperty(ref multiply, value); CalcPrediction(); } }
         public bool UseData { get => useData; set { SetProperty(ref useData, value); CalcPrediction(); } }
 
@@ -32,40 +39,67 @@ namespace Har_reader
         public int StepS1 { get => stepS1; set { SetProperty(ref stepS1, value); CalcPrediction(); } }
         public int StepS2 { get => stepS2; set => SetProperty(ref stepS2, value); }
         public int StepS3 { get => stepS3; set => SetProperty(ref stepS3, value); }
+
+        private double? DataBalance { get; set; }
+        private int? DataStep { get; set; }
+        private double? CurrBet { get; set; }
         public CalcBetsModel()
         {
             CalcPrediction();
+            DataUpdated += CalcBetsModel_DataUpdated;
         }
-        public void CalcPrediction(double? balance = null)
+
+        private void CalcBetsModel_DataUpdated(double balance, int? currLoseStrike, double? currBetAcc)
         {
-            int i = StepS1;
+            DataBalance = balance;
+            DataStep = currLoseStrike;
+            CurrBet = currBetAcc;
+            if (UseData)
+            {
+                StepS1 = DataStep != null ? (int)DataStep : StepS1;
+                BetS1 = CurrBet != null ? (double)CurrBet : BetS1;
+            }
+            CalcPrediction();
+        }
+
+        public void CalcPrediction()
+        {
+            int i = 1;//StepS1;
             List<double> bets = new List<double>();
             bets.Add(BetS1);
             List<double> sums = new List<double>();
             sums.Add(BetS1);
             List<int> steps = new List<int>();
+            steps.Add(StepS1);
+            //рассчитать на 25 шагов и не париться? будет выдавать 100шагов от указанного шага (по ставке)
             while (true)
             {
-                ??? BAG IF STEP NOT 1
-                steps.Add(i);
+                //??? BAG IF STEP NOT 1
+                steps.Add(steps[i - 1] + 1);
                 double b = bets[i - 1] * Multiply;
                 bets.Add(b);
                 sums.Add(sums[i - 1] + b);
                 i++;
-                if (balance != null)
-                {
-                    if (sums.Last() > balance)
-                        break;
-                }
-                else if (i > 15)
+                if (i > 25)
                     break;
             }
-            StepS3 = steps.Last();
-            StepS2 = steps[steps.IndexOf(StepS3) - 1];
-            BetS3 = bets.Last();
-            BetS2 = bets[bets.IndexOf(BetS3) - 1];
-            SummS3 = sums.Last();
-            SummS2 = sums[sums.IndexOf(SummS3) - 1];
+            double over = 0.0d;
+            int indx = 0;
+            if (DataBalance != null)
+            {
+                over = sums.Where(t => t > DataBalance).First();
+            }
+            else
+            {
+                over = sums.Last();
+            }
+            indx = sums.IndexOf(over);
+            StepS3 = steps[indx];
+            StepS2 = indx > 0 ? steps[indx - 1] : steps[0];
+            SummS3 = sums[indx];
+            SummS2 = indx > 0 ? sums[indx - 1] : sums[0];
+            BetS3 = bets[indx];
+            BetS2 = indx > 0 ? bets[indx - 1] : bets[0];
         }
         public void SaveSettings()
         {

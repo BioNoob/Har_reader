@@ -7,12 +7,7 @@ using System.Threading.Tasks;
 
 namespace Har_reader
 {
-    public interface IBalanceDataSender
-    {
-        public delegate void DataDelegate(double balance, int? currLoseStrike, double? currBetAcc);
-        public event DataDelegate DataUpdated;
-    }
-    public class CalcBetsModel : Proper, IBalanceDataSender
+    public class CalcBetsModel : Proper
     {
         private int stepS1 = 1;
         private int stepS2;
@@ -26,7 +21,9 @@ namespace Har_reader
         private double multiply = 2;
         private bool useData;
 
-        public event IBalanceDataSender.DataDelegate DataUpdated;
+        private int maxStep = 10;
+
+        public int MaxStep { get => maxStep; set => SetProperty(ref maxStep, value); }
 
         public double Multiply { get => multiply; set { SetProperty(ref multiply, value); CalcPrediction(); } }
         public bool UseData { get => useData; set { SetProperty(ref useData, value); CalcPrediction(); } }
@@ -45,14 +42,17 @@ namespace Har_reader
         private double? CurrBet { get; set; }
         public CalcBetsModel()
         {
+            BetS1 = Settings.Default.CalcBet;
+            StepS1 = Settings.Default.CalcStep;
+            Multiply = Settings.Default.CalcMulty;
+            MaxStep = Settings.Default.CalcMaxStep;
             CalcPrediction();
-            DataUpdated += CalcBetsModel_DataUpdated;
         }
 
-        private void CalcBetsModel_DataUpdated(double balance, int? currLoseStrike, double? currBetAcc)
+        public void SetData(double balance, int? currLoseStrike, double? currBetAcc)
         {
             DataBalance = balance;
-            DataStep = currLoseStrike;
+            DataStep = currLoseStrike + 1;
             CurrBet = currBetAcc;
             if (UseData)
             {
@@ -80,7 +80,7 @@ namespace Har_reader
                 bets.Add(b);
                 sums.Add(sums[i - 1] + b);
                 i++;
-                if (i > 25)
+                if (i > MaxStep)
                     break;
             }
             double over = 0.0d;
@@ -103,13 +103,12 @@ namespace Har_reader
         }
         public void SaveSettings()
         {
-            //Settings.Default.AlertPathWav = AlertPath;
-            //Settings.Default.LosePathWav = LosePath;
-            //Settings.Default.WinPathWav = WinPath;
-            //Settings.Default.AlertUseDef = DefAlertChecked;
-            //Settings.Default.WinUseDef = DefWinChecked;
-            //Settings.Default.LoseUseDef = DefLoseChecked;
-            //Settings.Default.Save();
+            Settings.Default.CalcBet = BetS1;
+            Settings.Default.CalcStep = StepS1;
+            Settings.Default.CalcMulty = Multiply;
+            Settings.Default.CalcMaxStep = MaxStep;
+            Settings.Default.Save();
         }
+
     }
 }

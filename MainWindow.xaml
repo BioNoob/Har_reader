@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" FontFamily="Jura" WindowStyle="None" MouseDown="Window_MouseDown"
+        mc:Ignorable="d" FontFamily="Jura" FontWeight="Bold" WindowStyle="None" MouseDown="Window_MouseDown"
         xmlns:local="clr-namespace:Har_reader" KeyDown="Window_KeyDown" 
-        Title="Odyssey Monitor" Height="500" MinHeight="550" MinWidth="770" Width="550">
+        Title="Odyssey Monitor" Height="550" MinHeight="550" MinWidth="770" Width="550">
     <Window.Resources>
         <DoubleAnimation x:Key="AlertAnim" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:1" 
                          AutoReverse="True" RepeatBehavior="Forever"/>
@@ -55,12 +55,22 @@
                 <Image Source="Resources/punk-token.png" Grid.Column="1" Width="17" Height="17"/>
                 <Label Content="{Binding Profile.Balance.NormalPunk}" ContentStringFormat="{}{0:#0.000}" Grid.Column="2" MinWidth="70" HorizontalContentAlignment="Left"/>
             </Grid>
-            <StackPanel Grid.Column="2" Grid.RowSpan="2" Grid.Row="1">
+            <Grid Grid.Column="2" Grid.RowSpan="2" Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <local:BetControl  x:Name="BetCntrl" DataContext="{Binding BM}"
                               VerticalAlignment="Top"/>
-                <local:SoundControl Grid.Column="2" Grid.Row="2" DataContext="{Binding SM}"/>
-                <local:CalcBets Grid.Column="2" Grid.Row="3" DataContext="{Binding CBM}"/>
-            </StackPanel>
+                <local:CalcBets Grid.Row="1" DataContext="{Binding CBM}" VerticalAlignment="Bottom"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" HorizontalAlignment="Left" Grid.Row="2" Margin="10,0,0,0">
+                    <Label Content="Count of games:" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                    Padding="0"/>
+                    <TextBlock x:Name="Counter" Text="{Binding USmes.Count}" VerticalAlignment="Center"
+                       HorizontalAlignment="Right" Padding="0" Grid.Column="2" Margin="5,0"/>
+                </StackPanel>
+            </Grid>
             <Grid Grid.Row="1" Margin="0,5,0,5" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto"/>
@@ -122,7 +132,19 @@
                     TextWrapping="WrapWithOverflow" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="5,5,0,0"
                            Text="{Binding Status}" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" TextAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Center" 
-                           Margin="5,5,0,0" Text="{Binding TimerStatus}"/>
+                           Margin="5,5,0,0" Text="{Binding TimerStatus}" FontWeight="Bold" Foreground="#5C11EB"/>
+                <Button Grid.Row="1" Grid.RowSpan="2" Width="25" Height="25" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right"
+                        Background="Transparent" BorderThickness="0" x:Name="OpenPopup" Command="{Binding ChangeVisSettings}">
+                    <Image Source="Resources/sets.png" Margin="0"/>
+                </Button>
+                <Popup AllowsTransparency="True" StaysOpen="True" 
+                       x:Name="ContextPopup" IsOpen="{Binding SetsIsOpen}"
+                       PlacementTarget="{Binding ElementName=OpenPopup}">
+                    <Border BorderBrush="Black" BorderThickness="1">
+                        <local:SoundControl Grid.Column="2" Grid.Row="2" DataContext="{Binding SM}" Background="White"/>
+                    </Border>
+                    
+                </Popup>
             </Grid>
             <DataGrid MinWidth="450" SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False" ItemsSource="{Binding USmes}" IsReadOnly="True"
             Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5,0,0" AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False"
@@ -135,9 +157,9 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Game ID" Binding="{Binding GameId}" MinWidth="50"/>
+                    <DataGridTextColumn Header="Game ID" Binding="{Binding GameId}" MinWidth="60"/>
                     <DataGridTextColumn Header="Bet" Binding="{Binding DopData}" MinWidth="75"/>
-                    <DataGridTemplateColumn Header="Profit" MinWidth="50">
+                    <DataGridTemplateColumn Header="Profit" MinWidth="65">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding ProfitStr}"/>
@@ -198,12 +220,7 @@
                     </Style>
                 </DataGrid.RowStyle>
             </DataGrid>
-            <StackPanel Orientation="Horizontal" Grid.Column="2" VerticalAlignment="Bottom" HorizontalAlignment="Left" Grid.Row="2" Margin="10,0,0,0">
-                <Label Content="Count of crash:" VerticalAlignment="Center" HorizontalAlignment="Right" 
-                    Padding="0"/>
-                <TextBlock x:Name="Counter" Text="{Binding USmes.Count}" VerticalAlignment="Center"
-                       HorizontalAlignment="Right" Padding="0" Grid.Column="2" Margin="5,0"/>
-            </StackPanel>
+
             <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,5" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Har_reader"
-             mc:Ignorable="d" FontFamily="Jura" 
+             mc:Ignorable="d" FontFamily="Jura" FontWeight="Bold"
              d:DesignHeight="127" d:DesignWidth="250">
     <UserControl.DataContext>
         <local:CalcBetsModel/>
@@ -36,7 +36,7 @@
             <ColumnDefinition Width="35"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="35"/>
+            <ColumnDefinition Width="40"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -54,7 +54,7 @@
         <Label Grid.Row="1" Content="Bet" Grid.Column="1"/>
         <Label Grid.Row="1" Content="Summ" Grid.Column="2"/>
         <Label Grid.Row="1" Content="Multy" Grid.Column="3"/>
-        <TextBox Grid.Row="2" Grid.Column="0" Text="{Binding StepS1}" Width="25">
+        <TextBox Grid.Row="2" Grid.Column="0" Text="{Binding StepS1}" Width="25"  PreviewTextInput="TextBox_PreviewTextInputInt" TextChanged="TextBox_TextChanged">
             <TextBox.Style>
                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                     <Style.Triggers>
@@ -65,8 +65,8 @@
                 </Style>
             </TextBox.Style>
         </TextBox>
-        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding BetS1,StringFormat={}{0:F1}}">
-            <TextBox.Style>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding BetS1,StringFormat={}{0:F1}}" PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged">
+            <!--<TextBox.Style>
                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding UseData}" Value="true">
@@ -74,17 +74,18 @@
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </TextBox.Style>
+            </TextBox.Style>-->
         </TextBox>
         <TextBox Grid.Row="2" Grid.Column="2" IsReadOnly="True" Text="{Binding BetS1, StringFormat={}{0:F1}}"/>
-        <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding Multiply}" Width="25"/>
+        <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding Multiply}" Width="25"  PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged"/>
         <TextBox Grid.Row="3" Grid.Column="0" IsReadOnly="True" Text="{Binding StepS2}" Width="25"/>
         <TextBox Grid.Row="3" Grid.Column="1" IsReadOnly="True" Text="{Binding BetS2, StringFormat={}{0:F1}}"/>
         <TextBox Grid.Row="3" Grid.Column="2" IsReadOnly="True" Text="{Binding SummS2, StringFormat={}{0:F1}}"/>
-        <TextBox Grid.Row="4" Grid.Column="0" IsReadOnly="True" Text="{Binding StepS3}" Width="25"/>
-        <TextBox Grid.Row="4" Grid.Column="1" IsReadOnly="True" Text="{Binding BetS3, StringFormat={}{0:F1}}"/>
-        <TextBox Grid.Row="4" Grid.Column="2" IsReadOnly="True" Text="{Binding SummS3, StringFormat={}{0:F1}}"/>
-        <CheckBox Grid.Row="5" Content="Use data from log" Grid.ColumnSpan="4" IsChecked="{Binding UseData}"
+        <TextBox Grid.Row="4" Grid.Column="0" IsReadOnly="True" Text="{Binding StepS3}" Width="25" Background="#FFCB4545"/>
+        <TextBox Grid.Row="4" Grid.Column="1" IsReadOnly="True" Text="{Binding BetS3, StringFormat={}{0:F1}}" Background="#FFCB4545"/>
+        <TextBox Grid.Row="4" Grid.Column="2" IsReadOnly="True" Text="{Binding SummS3, StringFormat={}{0:F1}}" Background="#FFCB4545"/>
+        <TextBox Grid.Row="5" Grid.Column="0" Text="{Binding MaxStep}" Width="25" Margin="0" ToolTip="Max Step"  PreviewTextInput="TextBox_PreviewTextInputInt" TextChanged="TextBox_TextChanged"/>
+        <CheckBox Grid.Row="5" Grid.Column="1" Content="Use data from log" Grid.ColumnSpan="3" IsChecked="{Binding UseData}"
                   Padding="0" Margin="5,5,0,5" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </Grid>
 </UserControl>

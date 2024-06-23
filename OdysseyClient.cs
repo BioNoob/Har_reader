@@ -33,6 +33,8 @@ namespace Har_reader
     {
         initial_data,
         game_crash,
+        game_started,
+        game_starting,
         win,
         bet_accepted,
         bets,
@@ -112,6 +114,7 @@ namespace Har_reader
                     Curr_timer = TimerMess.start;
                     JObject o = JObject.Parse(t.Text);
                     GameID = (long)o.SelectToken("data").SelectToken("game_id");
+                    MessageGeted?.Invoke(IncomeMessageType.game_starting, new _webSocketMessages(GameID));
                     StatusChanged?.Invoke("Run is starting");
                 });
             client.MessageReceived
@@ -130,6 +133,7 @@ namespace Har_reader
                     GameInProgress = true;
                     expired_timer.Stop();
                     Curr_timer = TimerMess.fly;
+                    MessageGeted?.Invoke(IncomeMessageType.game_started, new _webSocketMessages(GameID));
                     StatusChanged?.Invoke("Run is started");
                 });
             client.MessageReceived

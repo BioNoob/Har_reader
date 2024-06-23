@@ -207,10 +207,15 @@ namespace Har_reader
         {
             switch (type)
             {
-                //case IncomeMessageType.initial_data:
-                //    StatusImage = "Resources/profile.png";
-                //    DopData = $"{mes.GetProfileData.Username} : {mes.GetProfileData.Balance.NormalPunk}";
-                //    break;
+                case IncomeMessageType.game_started:
+                    StatusImage = "Resources/rock_start.png";
+                    break;
+                case IncomeMessageType.game_starting:
+                    StatusImage = "Resources/rock_prep.png";
+                    break;
+                case IncomeMessageType.initial_data:
+                    StatusImage = "Resources/rock_start.png";
+                    break;
                 case IncomeMessageType.game_crash:
                     StatusImage = "Resources/explosion.png";
                     GameCrash = mes.GetCrashData.Game_crash_normal;

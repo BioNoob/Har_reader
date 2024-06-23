@@ -64,12 +64,12 @@
         </Label>
         <Grid Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
-            <Button Width="25" Content="-" Command="{Binding ChangeAlertVal}" CommandParameter="-"/>
-            <TextBlock Text="{Binding AlertValCounter}" Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+            <Button Width="25" Content="-" Command="{Binding ChangeAlertVal}" CommandParameter="-" Grid.Column="1" Margin="5,0"/>
+            <TextBlock Text="{Binding AlertValCounter}" Grid.Column="0" Margin="0" VerticalAlignment="Center">
                 <TextBlock.ToolTip>
                     <ToolTip Content="Count of lower checks for Alert or AutoBet"/>
                 </TextBlock.ToolTip>
@@ -79,13 +79,13 @@
         <Label Grid.Row="3" Grid.Column="0" Content="Bet Value" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center"/>
         <Grid Grid.Row="3" Grid.Column="1" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
             <Button Width="25" Grid.Column="2" Content="x2" Command="{Binding ChangeBetVal}" CommandParameter="+"/>
-            <TextBox PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged" Text="{Binding Bet.BetVal, UpdateSourceTrigger=LostFocus}" Grid.Column="1" Margin="10,0" VerticalContentAlignment="Center"/>
-            <Button Width="25" Grid.Column="0" Content="/2" Command="{Binding ChangeBetVal}" CommandParameter="-"/>
+            <TextBox PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged" Text="{Binding Bet.BetVal, UpdateSourceTrigger=LostFocus}" Grid.Column="0" Margin="0" VerticalContentAlignment="Center"/>
+            <Button Width="25" Grid.Column="1" Content="/2" Command="{Binding ChangeBetVal}" CommandParameter="-" Margin="5,0"/>
         </Grid>
         <Label Grid.Row="4" Grid.Column="0" Content="Auto CashOut value" Margin="0,10,10,0" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Label.ToolTip>
@@ -99,12 +99,12 @@
         </Label>
         <Grid Grid.Row="4" Grid.Column="1" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
-            <Button Width="25" Content="-" Command="{Binding ChangeAutoCasheVal}" CommandParameter="-"/>
-            <TextBox PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged"  Text="{Binding Bet.CashOut, UpdateSourceTrigger=LostFocus}" Grid.Column="1" Margin="10,0" VerticalContentAlignment="Center">
+            <Button Width="25" Content="-" Command="{Binding ChangeAutoCasheVal}" CommandParameter="-" Grid.Column="1" Margin="5,0"/>
+            <TextBox PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged"  Text="{Binding Bet.CashOut, UpdateSourceTrigger=LostFocus}" Grid.Column="0" Margin="0" VerticalContentAlignment="Center">
                 <TextBox.ToolTip>
                     <ToolTip>
                         <StackPanel Orientation="Horizontal">

@@ -27,10 +27,6 @@ namespace Har_reader
             {
                 x.Text = "0";
             }
-            //else if(x.Text.EndsWith('.'))
-            //{
-            //    x.Text = "0.0";
-            //}
         }
     }
 }

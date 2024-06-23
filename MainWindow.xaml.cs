@@ -65,6 +65,7 @@ namespace Har_reader
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
+                (DataContext as MainModel).SetsIsOpen = false;
             }
         }
 
@@ -95,5 +96,6 @@ namespace Har_reader
         {
             WindowState = WindowState.Minimized;
         }
+
     }
 }

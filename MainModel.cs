@@ -11,7 +11,7 @@ using System.Windows.Data;
 namespace Har_reader
 {
 
-    public class MainModel : Proper, IBalanceDataSender
+    public class MainModel : Proper
     {
         private int counter_lowers;
         private ObservableCollection<UnitedSockMess> usmes = new ObservableCollection<UnitedSockMess>();
@@ -25,6 +25,7 @@ namespace Har_reader
         private CommandHandler _exitcommand;
         private CommandHandler _savecsvcommand;
         private CommandHandler _disconnectCommand;
+        private CommandHandler _cahngeVisCommand;
         private Profile profile;
         private BetsModel bM;
         private CalcBetsModel cBM;
@@ -35,11 +36,13 @@ namespace Har_reader
         private string saveStatus;
         private string timerStatus;
         private SoundControlModel sM;
-
-        public string TimerStatus { get => timerStatus; set => SetProperty(ref timerStatus, value); }
-        public string SaveStatus { get => saveStatus; set => SetProperty(ref saveStatus, value); }
+        private bool setsIsOpen;
+        private bool HandledBet { get; set; } = false;
         private OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
         private GoogleApi gp { get; set; }
+        public bool SetsIsOpen { get => setsIsOpen; set => SetProperty(ref setsIsOpen, value); }
+        public string TimerStatus { get => timerStatus; set => SetProperty(ref timerStatus, value); }
+        public string SaveStatus { get => saveStatus; set => SetProperty(ref saveStatus, value); }
         public Profile Profile { get => profile; set => SetProperty(ref profile, value); }
         public string Token { get => token; set => SetProperty(ref token, value); }
         public ObservableCollection<UnitedSockMess> USmes { get => usmes; set => SetProperty(ref usmes, value); }
@@ -57,8 +60,6 @@ namespace Har_reader
         public bool Is_connected { get => is_connected; set => SetProperty(ref is_connected, value); }
         public delegate void AlertBlink(bool blink, SoundPlayer sound);
         public event AlertBlink DoAlertBlink;
-        public event IBalanceDataSender.DataDelegate DataUpdated;
-
         public bool ExpEnabled { get => expEnabled; set => SetProperty(ref expEnabled, value); }
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
         public SoundControlModel SM { get => sM; set => SetProperty(ref sM, value); }
@@ -66,7 +67,7 @@ namespace Har_reader
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
         public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
         public int CurrSaveCounter { get; set; } = 0;
-        private bool HandledBet { get; set; } = false;
+
         public MainModel()
         {
             USmes.CollectionChanged += USmes_CollectionChanged;
@@ -80,13 +81,13 @@ namespace Har_reader
             BM.Bet.CashOut = Settings.Default.CashOutVal;
             AutoSaveCounter = Settings.Default.AutoSaveTime;
             Token = Settings.Default.Token;
-            SaveStatus = "Hello, I'm save status";
+            SaveStatus = "Hello, Im'a save status";
             Status = "Hello, Im'a status";
             object lockObj = new object();
             BindingOperations.EnableCollectionSynchronization(USmes, lockObj);
             Client = new OdysseyClient();
             Profile = new Profile();
-            Profile.Username = "NULL";
+            Profile.Username = "Hello, Im'a your name";
             Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
@@ -146,8 +147,7 @@ namespace Har_reader
                 case IncomeMessageType.initial_data:
                     Profile = mess.GetProfileData;
                     gp.SetProfile(Profile);
-                    interface NOT WORKING;
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, null, null);
+                    CBM.SetData(Profile.Balance.NormalPunk, null, null);
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
@@ -170,7 +170,7 @@ namespace Har_reader
                     {
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, null);
+                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, null);
                     break;
                 case IncomeMessageType.bets:
                     if (HandledBet)
@@ -179,7 +179,7 @@ namespace Har_reader
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.bet_accepted:
                     if (!HandledBet)
@@ -189,7 +189,7 @@ namespace Har_reader
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.win:
                     //WIN by AutoCashOut
@@ -199,14 +199,14 @@ namespace Har_reader
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.lose:
                     SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    DataUpdated?.Invoke(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
+                    CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, CurrBet.BetVal);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;
@@ -314,6 +314,7 @@ namespace Har_reader
                     Client.StopClient();
                     gp.DoSheetSave(USmes);
                     SM.SaveSettings();
+                    CBM.SaveSettings();
                     Settings.Default.AlertVal = BM.AlertValCounter;
                     Settings.Default.LowerVal = BM.LowerCheckVal;
                     Settings.Default.BetVal = BM.Bet.BetVal;
@@ -362,7 +363,18 @@ namespace Har_reader
                 );
             }
         }
-
+        public CommandHandler ChangeVisSettings
+        {
+            get 
+            {
+                return _cahngeVisCommand ??= new CommandHandler(obj =>
+                {
+                    SetsIsOpen = !SetsIsOpen;
+                },
+                (obj) => true
+                );
+            }
+        }
         public CommandHandler DisconnectCommand
         {
             get

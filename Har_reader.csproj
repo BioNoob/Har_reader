@@ -37,6 +37,9 @@
     <None Remove="Resources\play.png" />
     <None Remove="Resources\profile.png" />
     <None Remove="Resources\punk-token.png" />
+    <None Remove="Resources\rock_prep.png" />
+    <None Remove="Resources\rock_start.png" />
+    <None Remove="Resources\sets.png" />
     <None Remove="Resources\win.png" />
     <None Remove="Resources\win.wav" />
   </ItemGroup>
@@ -59,6 +62,9 @@
     <Resource Include="Resources\play.png" />
     <Resource Include="Resources\profile.png" />
     <Resource Include="Resources\punk-token.png" />
+    <Resource Include="Resources\rock_prep.png" />
+    <Resource Include="Resources\rock_start.png" />
+    <Resource Include="Resources\sets.png" />
     <Resource Include="Resources\win.png" />
   </ItemGroup>
 

@@ -70,26 +70,34 @@ namespace Har_reader
         {
             await Task.Run(() =>
             {
-                if (!ProfileSet)
+                try
                 {
-                    StatusChanged?.Invoke("No profile to save");
-                    return;
+                    if (!ProfileSet)
+                    {
+                        StatusChanged?.Invoke("No profile to save");
+                        return;
+                    }
+
+                    StatusChanged?.Invoke("Saving Data to google");
+                    var buf = mess.Select(t => t.GameId).Except(Saved);
+                    if (buf.Count() < 1)
+                    {
+                        StatusChanged?.Invoke("Nothing to save");
+                        return;
+                    }
+                    SaveInProgress = true;
+                    if (Service is null)
+                        SetConnAndRead();
+                    InsertLogData(mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null));
+                    Saved.AddRange(buf);
+                    StatusChanged?.Invoke("Saved!");
+                    SaveInProgress = false;
+                }
+                catch (System.Exception)
+                {
+                    StatusChanged?.Invoke("Error on save!");
                 }
 
-                StatusChanged?.Invoke("Saving Data to google");
-                var buf = mess.Select(t => t.GameId).Except(Saved);
-                if (buf.Count() < 1)
-                {
-                    StatusChanged?.Invoke("Nothing to save");
-                    return;
-                }
-                SaveInProgress = true;
-                if (Service is null)
-                    SetConnAndRead();
-                InsertLogData(mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null));
-                Saved.AddRange(buf);
-                StatusChanged?.Invoke("Saved!");
-                SaveInProgress = false;
             });
 
         }

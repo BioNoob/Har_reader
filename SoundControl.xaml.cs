@@ -17,5 +17,10 @@ namespace Har_reader
         {
             (this.DataContext as SoundControlModel).SetPath((sender as TextBox).Tag.ToString());
         }
+
+        private void UserControl_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            e.Handled = true;
+        }
     }
 }

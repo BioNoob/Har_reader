@@ -166,5 +166,53 @@ namespace Har_reader.Properties {
                 this["LoseUseDef"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.1")]
+        public double CalcBet {
+            get {
+                return ((double)(this["CalcBet"]));
+            }
+            set {
+                this["CalcBet"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int CalcStep {
+            get {
+                return ((int)(this["CalcStep"]));
+            }
+            set {
+                this["CalcStep"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public double CalcMulty {
+            get {
+                return ((double)(this["CalcMulty"]));
+            }
+            set {
+                this["CalcMulty"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int CalcMaxStep {
+            get {
+                return ((int)(this["CalcMaxStep"]));
+            }
+            set {
+                this["CalcMaxStep"] = value;
+            }
+        }
     }
 }

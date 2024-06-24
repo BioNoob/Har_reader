@@ -260,51 +260,6 @@ namespace Har_reader
                 );
             }
         }
-        //private CommandHandler _selectfilecomand;
-        //public CommandHandler SelectFileCommand
-        //{
-        //    get
-        //    {
-        //        return _selectfilecomand ??= new CommandHandler(obj =>
-        //        {
-        //            Microsoft.Win32.OpenFileDialog t = new Microsoft.Win32.OpenFileDialog();
-        //            t.RestoreDirectory = true;
-        //            t.Filter = "Har files (*.har)|*.har|All files (*.*)|*.*";
-        //            t.DefaultExt = "har";
-        //            t.Multiselect = true;
-        //            if (t.ShowDialog() == true)
-        //            {
-        //                Answer.Clear();
-        //                path = Path.GetDirectoryName(t.FileName);
-        //                Status = path;
-        //                foreach (var file in t.FileNames)
-        //                {
-        //                    string file_cont = File.ReadAllText(file);
-        //                    JObject o = JObject.Parse(file_cont);
-        //                    var messages = o.SelectTokens("log.entries").Select(t => t.Children()["_webSocketMessages"]).ToList();
-        //                    foreach (var item in messages)
-        //                    {
-        //                        foreach (var token in item)
-        //                        {
-        //                            List<_webSocketMessages> q = JsonConvert.DeserializeObject<List<_webSocketMessages>>(token.ToString());
-        //                            q.Where(t => t.Data.Contains("\"type\":\"game_crash\"")).Where(t => t.GetData.Game_crash != 0).ToList().ForEach(p => Answer.Add(p));
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //            //if(a)
-        //            //{
-        //            //    DoAlertBlink?.Invoke(false);
-        //            //    a = false;
-        //            //    return;
-        //            //}
-        //            //DoAlertBlink?.Invoke(true);
-        //            //a = true;
-        //        },
-        //        (obj) => true
-        //        );
-        //    }
-        //}
         public CommandHandler ExitCommand
         {
             get
@@ -336,28 +291,6 @@ namespace Har_reader
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
                     gp.DoSheetSave(USmes);
-                    //Microsoft.Win32.SaveFileDialog sfd = new Microsoft.Win32.SaveFileDialog();
-                    //sfd.RestoreDirectory = true;
-                    //sfd.Filter = "Csv files (*.csv)|*.csv|All files (*.*)|*.*";
-                    //sfd.DefaultExt = "csv";
-                    //sfd.InitialDirectory = path;
-                    //sfd.Title = "Save export file";
-                    //sfd.FileName = "EXPORT.csv";
-                    //if (sfd.ShowDialog() == true)
-                    //{
-                    //    using (var writer = new StreamWriter(sfd.FileName))
-                    //    using (var csv = new CsvWriter(writer,
-                    //        new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = ";" }))
-                    //    {
-                    //        csv.Context.RegisterClassMap<FooMap>();
-                    //        csv.WriteRecords(Answer.Where(t => t.MsgType == IncomeMessageType.game_crash));
-                    //    }
-                    //    ProcessStartInfo psi = new ProcessStartInfo();
-                    //    psi.FileName = sfd.FileName;
-                    //    psi.UseShellExecute = true;
-                    //    Process.Start(psi);
-                    //    Status = "Saved";
-                    //}
                 },
                 (obj) => true
                 );

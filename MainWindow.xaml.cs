@@ -21,6 +21,7 @@ namespace Har_reader
         public MainWindow()
         {
             InitializeComponent();
+            Style = (Style)FindResource(typeof(Window));
             wih = new WindowInteropHelper(this);
             (this.DataContext as MainModel).DoAlertBlink += MainWindow_DoAlertBlink;
             t = new Timer(2000);

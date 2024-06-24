@@ -1,7 +1,5 @@
 ﻿using Har_reader.Properties;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows.Data;
 
 namespace Har_reader
@@ -21,6 +19,8 @@ namespace Har_reader
             CalcIteration c = new CalcIteration();
             c.Step = Step + 1;
             c.Bet = Bet * multiply;
+            if (c.Bet > 80)
+                c.Bet = 80;
             c.Sum = Sum + c.Bet;
             return c;
         }
@@ -31,11 +31,9 @@ namespace Har_reader
         private double betS1 = 0.4;
         private double multiply = 2;
         private bool useData;
-        private int maxStep = 10;
         private ObservableCollection<CalcIteration> calculations;
         public ObservableCollection<CalcIteration> Calculations { get => calculations; set => SetProperty(ref calculations, value); }
 
-        public int MaxStep { get => maxStep; set => SetProperty(ref maxStep, value); }
 
         public double Multiply { get => multiply; set { SetProperty(ref multiply, value); CalcPrediction(); } }
         public bool UseData { get => useData; set { SetProperty(ref useData, value); CalcPrediction(); } }
@@ -54,7 +52,6 @@ namespace Har_reader
             BetS1 = Settings.Default.CalcBet;
             StepS1 = Settings.Default.CalcStep;
             Multiply = Settings.Default.CalcMulty;
-            MaxStep = Settings.Default.CalcMaxStep;
 
             CalcPrediction();
         }
@@ -90,46 +87,36 @@ namespace Har_reader
             int red_cnt = 0;
             while (true)
             {
-                if (i >= MaxStep || red_cnt > 1)
+                if (red_cnt > 1)
                     break;
                 var next_c = c.CalcNext(Multiply);
                 if (DataBalance != null)
                 {
-                    if (next_c.Sum > DataBalance)
+                    if (next_c.Sum > DataBalance || next_c.Bet == 80)
                     {
                         red_cnt++;
                         next_c.IsRed = true;
                     }
                 }
+                else
+                {
+                    if (next_c.Bet == 80)
+                    {
+                        red_cnt++;
+                        next_c.IsRed = true;
+                    }
+
+                }
                 Calculations.Add(next_c);
                 c = next_c;
                 i++;
-
             }
-            //double over = 0.0d;
-            //int indx = 0;
-            //if (DataBalance != null)
-            //{
-            //    over = sums.Where(t => t > DataBalance).First();
-            //}
-            //else
-            //{
-            //    over = sums.Last();
-            //}
-            //indx = sums.IndexOf(over);
-            //StepS3 = steps[indx];
-            //StepS2 = indx > 0 ? steps[indx - 1] : steps[0];
-            //SummS3 = sums[indx];
-            //SummS2 = indx > 0 ? sums[indx - 1] : sums[0];
-            //BetS3 = bets[indx];
-            //BetS2 = indx > 0 ? bets[indx - 1] : bets[0];
         }
         public void SaveSettings()
         {
             Settings.Default.CalcBet = BetS1;
             Settings.Default.CalcStep = StepS1;
             Settings.Default.CalcMulty = Multiply;
-            Settings.Default.CalcMaxStep = MaxStep;
             Settings.Default.Save();
         }
 

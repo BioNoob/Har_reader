@@ -304,7 +304,6 @@ namespace Har_reader
         {
             if (!AuthDone) return;
             StatusChanged?.Invoke("Try place a bet");
-            int a = 0;
             while (GameInProgress)
             {
                 await Task.Delay(500);

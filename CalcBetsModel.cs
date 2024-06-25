@@ -40,10 +40,9 @@ namespace Har_reader
 
         public double BetS1 { get => betS1; set { SetProperty(ref betS1, value); CalcPrediction(); } }
         public int StepS1 { get => stepS1; set { SetProperty(ref stepS1, value); CalcPrediction(); } }
-
+        private int backupStep { get; set; }
+        private double backupBet { get; set; }
         private double? DataBalance { get; set; }
-        private int? DataStep { get; set; }
-        private double? CurrBet { get; set; }
         public CalcBetsModel()
         {
             Calculations = new ObservableCollection<CalcIteration>();
@@ -59,12 +58,23 @@ namespace Har_reader
         public void SetData(double balance, int? currLoseStrike, double? currBetAcc)
         {
             DataBalance = balance;
-            DataStep = currLoseStrike + 1;
-            CurrBet = currBetAcc;
             if (UseData)
             {
-                StepS1 = DataStep != null ? (int)DataStep : StepS1;
-                BetS1 = CurrBet != null ? (double)CurrBet : BetS1;
+                if (currLoseStrike.HasValue)
+                {
+                    backupStep = StepS1;
+                    StepS1 = currLoseStrike.Value;
+                }
+                if (currBetAcc.HasValue)
+                {
+                    backupBet = BetS1;
+                    BetS1 = currBetAcc.Value;
+                }
+            }
+            else
+            {
+                StepS1 = backupStep;
+                BetS1 = backupBet;
             }
             CalcPrediction();
         }

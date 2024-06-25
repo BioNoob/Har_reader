@@ -53,6 +53,15 @@ namespace Har_reader
             GetSheets();
             StatusChanged?.Invoke("Sheets data readed");
         }
+        private void AddEmptyRows(int count)
+        {
+            UpdateSheetPropertiesRequest uspr = new UpdateSheetPropertiesRequest();
+            uspr.Properties = MySheet.Properties;
+            uspr.Fields = "*";
+            uspr.Properties.GridProperties.RowCount += count;
+            Service.Spreadsheets.BatchUpdate(new BatchUpdateSpreadsheetRequest() { Requests = new List<Request> { new Request { UpdateSheetProperties = uspr } } }, SpreadSheetId).Execute();
+
+        }
         private void GetSheets()
         {
             StatusChanged?.Invoke($"Read sheets data");
@@ -63,7 +72,13 @@ namespace Har_reader
             {
                 var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"{MySheet.Properties.Title}!A2:A").Execute();
                 if (val.Values != null)
+                {
                     Saved = val.Values.Select(t => long.Parse(t[0].ToString())).ToList();
+                    if (Saved.Count > MySheet.Properties.GridProperties.RowCount - 1000)
+                    {
+                        AddEmptyRows(10000);
+                    }
+                }
             }
         }
         public async void DoSheetSave(IEnumerable<UnitedSockMess> mess)
@@ -125,15 +140,17 @@ namespace Har_reader
             foreach (var item in aq)
             {
                 RowData row = new RowData();
-                row.Values = new List<CellData>();
-                //row.Values.Add(new CellData()
-                //{
-                //    UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
-                //    UserEnteredValue = new ExtendedValue() { NumberValue = item.Time_normal.ToOADate() },
-                //}
-                //);
-                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } });
-                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameCrash } });
+                row.Values = new List<CellData>
+                {
+                    //row.Values.Add(new CellData()
+                    //{
+                    //    UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
+                    //    UserEnteredValue = new ExtendedValue() { NumberValue = item.Time_normal.ToOADate() },
+                    //}
+                    //);
+                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } },
+                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameCrash } }
+                };
                 if (item.Profit < 0)
                 {
                     row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });

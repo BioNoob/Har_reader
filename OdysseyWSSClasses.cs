@@ -155,6 +155,7 @@ namespace Har_reader
         private double? gameCrash;
         private bool gameCrashLower;
         private string profitStr;
+        private DateTime dateOfGame;
 
         /*
 * 1 Добавили запись при старте игры (строка в таблице)
@@ -166,6 +167,7 @@ namespace Har_reader
         public double BetVal { get => betVal; set => SetProperty(ref betVal, value); } // BET val, cash out if has
         public double BetCashOut { get => betCashOut; set => SetProperty(ref betCashOut, value); } //
         public string ProfitStr { get => profitStr; set => SetProperty(ref profitStr, value); }
+        public DateTime DateOfGame { get => dateOfGame; set => SetProperty(ref dateOfGame, value); }
         public double Profit
         {
             get => profit;
@@ -205,6 +207,9 @@ namespace Har_reader
         }
         public void SetDataByMess(IncomeMessageType type, _webSocketMessages mes)
         {
+            if(mes.Time == 0)
+                mes.Time = DateTimeOffset.Now.ToUnixTimeSeconds();
+            DateOfGame = mes.Time_normal;
             switch (type)
             {
                 case IncomeMessageType.game_started:
@@ -345,6 +350,8 @@ namespace Har_reader
                         Time = ((DateTimeOffset)date).ToUnixTimeSeconds();
                     var tok = JObject.Parse(Data);
                     GetCrashData = JsonConvert.DeserializeObject<game_crash_mess>(tok.ToString());
+                    if (GetCrashData.Game_crash < 100)
+                        GetCrashData.Game_crash = 100;
                     if (dop_info is long @lng)
                     {
                         var z = tok.SelectToken("cashouts").Children().ToList();

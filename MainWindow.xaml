@@ -26,7 +26,7 @@
         </DockPanel.Background>-->
         <Grid Margin="5,0" DockPanel.Dock="Top">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Width="25" Height="25" Click="Button_Click_1" HorizontalAlignment="Right" Grid.Column="2" 
+                <Button Width="25" Height="25" Click="Button_Click_1" HorizontalAlignment="Right" Grid.Column="2"
                 Padding="0" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <Image Source="Resources/minimize.png" Margin="0" Stretch="UniformToFill" />
                 </Button>

@@ -87,16 +87,29 @@ namespace Har_reader
             BindingOperations.EnableCollectionSynchronization(USmes, lockObj);
             Client = new OdysseyClient();
             Profile = new Profile();
+            gp = new GoogleApi();
+            TimerStatus = "Wait new round";
             Profile.Username = "Hello, Im'a your name";
             Profile.Balance.Punk = 0;
+            Profile.Balance.PropertyChanged += PunkValueChanged;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
             Client.TimerUpdated += Client_TimerUpdated;
-            gp = new GoogleApi();
             gp.StatusChanged += Gp_StatusChanged;
-            TimerStatus = "Wait new round";
+            BM.PropertyChanged += BM_PropertyChanged;
+            
         }
 
+        private void BM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            //throw new NotImplementedException();
+        }
+
+        private void PunkValueChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if(e.PropertyName == "Punk")
+            CBM.DataBalance = (sender as Balance).NormalPunk;
+        }
         private void USmes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             int last = CrashCount;
@@ -117,7 +130,6 @@ namespace Har_reader
             }
             ExpEnabled = CrashCount > 0 ? true : false;
         }
-
         private void Client_TimerUpdated(TimerMess type, double val)
         {
             switch (type)
@@ -130,7 +142,6 @@ namespace Har_reader
                     break;
             }
         }
-
         private void Gp_StatusChanged(string txt)
         {
             SaveStatus = txt;
@@ -236,7 +247,6 @@ namespace Har_reader
             else
                 permition_to_save = false;
         }
-
         private void Client_StatusChanged(string txt)
         {
             Status = txt;
@@ -283,7 +293,6 @@ namespace Har_reader
                 );
             }
         }
-
         public CommandHandler SaveCsvCommand
         {
             get

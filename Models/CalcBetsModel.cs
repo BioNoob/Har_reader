@@ -32,6 +32,8 @@ namespace Har_reader
         private double multiply = 2;
         private bool useData;
         private ObservableCollection<CalcIteration> calculations;
+        private double? dataBalance;
+
         public ObservableCollection<CalcIteration> Calculations { get => calculations; set => SetProperty(ref calculations, value); }
 
 
@@ -40,9 +42,9 @@ namespace Har_reader
 
         public double BetS1 { get => betS1; set { SetProperty(ref betS1, value); CalcPrediction(); } }
         public int StepS1 { get => stepS1; set { SetProperty(ref stepS1, value); CalcPrediction(); } }
-        private int backupStep { get; set; }
-        private double backupBet { get; set; }
-        public double? DataBalance { get; set; }
+        //private int backupStep { get; set; }
+        //private double backupBet { get; set; }
+        public double? DataBalance { get => dataBalance; set { SetProperty(ref dataBalance, value); CalcPrediction(); } }
         public CalcBetsModel()
         {
             Calculations = new ObservableCollection<CalcIteration>();
@@ -56,32 +58,34 @@ namespace Har_reader
         }
         public void SetData(int? currLoseStrike, double? currBetAcc)
         {
-            if (UseData)
-            {
-                if (currLoseStrike.HasValue)
-                {
-                    backupStep = StepS1;
-                    StepS1 = currLoseStrike.Value;
-                }
-                if (currBetAcc.HasValue)
-                {
-                    backupBet = BetS1;
-                    BetS1 = currBetAcc.Value;
-                }
-            }
-            else
-            {
-                StepS1 = backupStep;
-                BetS1 = backupBet;
-                if (currLoseStrike.HasValue)
-                {
-                    backupStep = currLoseStrike.Value;
-                }
-                if (currBetAcc.HasValue)
-                {
-                    backupBet = currBetAcc.Value;
-                }
-            }
+            SetProperty(ref stepS1, currLoseStrike.HasValue ? currLoseStrike.Value : stepS1, "StepS1");
+            SetProperty(ref betS1, currBetAcc.HasValue ? currBetAcc.Value : betS1, "BetS1");
+            //if (UseData)
+            //{
+            //    if (currLoseStrike.HasValue)
+            //    {
+            //        backupStep = StepS1;
+            //        StepS1 = currLoseStrike.Value;
+            //    }
+            //    if (currBetAcc.HasValue)
+            //    {
+            //        backupBet = BetS1;
+            //        BetS1 = currBetAcc.Value;
+            //    }
+            //}
+            //else
+            //{
+            //    StepS1 = backupStep;
+            //    BetS1 = backupBet;
+            //    if (currLoseStrike.HasValue)
+            //    {
+            //        backupStep = currLoseStrike.Value;
+            //    }
+            //    if (currBetAcc.HasValue)
+            //    {
+            //        backupBet = currBetAcc.Value;
+            //    }
+            //}
             CalcPrediction();
         }
 

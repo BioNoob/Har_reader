@@ -91,24 +91,28 @@ namespace Har_reader
             TimerStatus = "Wait new round";
             Profile.Username = "Hello, Im'a your name";
             Profile.Balance.Punk = 0;
-            Profile.Balance.PropertyChanged += PunkValueChanged;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
             Client.TimerUpdated += Client_TimerUpdated;
             gp.StatusChanged += Gp_StatusChanged;
             BM.PropertyChanged += BM_PropertyChanged;
-            
+            Profile.PropertyChanged += PunkValueChanged;
         }
 
         private void BM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            if (!CBM.UseData)
+                if (e.PropertyName == "BetVal" || e.PropertyName == "AlertValCounter")
+                    CBM.SetData(BM.AlertValCounter, BM.Bet.BetVal);
             //throw new NotImplementedException();
         }
 
         private void PunkValueChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if(e.PropertyName == "Punk")
-            CBM.DataBalance = (sender as Balance).NormalPunk;
+            if (e.PropertyName == "Punk")
+            {
+                CBM.DataBalance = (sender as Profile).Balance.NormalPunk;
+            }
         }
         private void USmes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
@@ -156,7 +160,7 @@ namespace Har_reader
             switch (type)
             {
                 case IncomeMessageType.initial_data:
-                    Profile = mess.GetProfileData;
+                    Profile.SetByAnotherProfile(mess.GetProfileData);
                     gp.SetProfile(Profile);
                     //CBM.SetData(Profile.Balance.NormalPunk, null, null);
                     break;
@@ -181,7 +185,8 @@ namespace Har_reader
                     {
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
-                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
+                    CBM.SetData(Counter_lowers, BM.Bet.BetVal);
+                    SM.GetSound(SoundControlModel.SoundEnum.CrushSound).Play();
                     break;
                 case IncomeMessageType.bets:
                     if (HandledBet)
@@ -190,7 +195,7 @@ namespace Har_reader
                     CurrBet.BetVal = mess.GetBetAccData.BetVal;
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
+                    CBM.SetData(Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.bet_accepted:
                     if (!HandledBet)
@@ -200,7 +205,7 @@ namespace Har_reader
                     CurrBet.CashOut = mess.GetBetAccData.CashOut;
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} DOWN TO {Profile.Balance.NormalPunk - CurrBet.BetVal}");
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk - CurrBet.BetVal);
-                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
+                    CBM.SetData(Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.win:
                     //WIN by AutoCashOut
@@ -210,14 +215,14 @@ namespace Har_reader
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
                     mess.ReviewData = $"Win {mess.ProfitData.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
+                    CBM.SetData(Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.lose:
                     SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
-                    //CBM.SetData(Profile.Balance.NormalPunk, Counter_lowers, BM.Bet.BetVal);
+                    CBM.SetData(Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.connected:
                     Is_connected = true;
@@ -226,6 +231,9 @@ namespace Har_reader
                 case IncomeMessageType.disconnected:
                     Is_connected = false;
                     BM.BetsEnabled = false;
+                    CBM.UseData = false;
+                    Profile.SetByAnotherProfile(new Profile());
+                    TimerStatus = "Disconnected";
                     break;
                 default:
                     break;
@@ -307,7 +315,7 @@ namespace Har_reader
         }
         public CommandHandler ChangeVisSettings
         {
-            get 
+            get
             {
                 return _cahngeVisCommand ??= new CommandHandler(obj =>
                 {

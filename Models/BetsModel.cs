@@ -27,7 +27,14 @@ namespace Har_reader
             BetsEnabled = false;
             Bet.BetVal = 0.1;
             Bet.CashOut = 1;
+            bet.PropertyChanged += Bet_PropertyChanged;
         }
+
+        private void Bet_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            SetProperty(e.PropertyName);
+        }
+
         public void TimeToBet()
         {
             OnReqBet?.Invoke(Bet);

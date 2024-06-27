@@ -4,16 +4,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Har_reader" MouseDown="UserControl_MouseDown"
-             mc:Ignorable="d" d:DesignHeight="105" d:DesignWidth="280">
+             mc:Ignorable="d" d:DesignHeight="140" d:DesignWidth="280">
     <UserControl.Resources>
         <Style TargetType="Label">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11"/>
         </Style>
         <Style TargetType="TextBox" x:Key="def_txt">
             <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="11"/>
         </Style>
     </UserControl.Resources>
     <UserControl.DataContext>
@@ -22,7 +26,8 @@
     <Grid Margin="5,0,5,5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="105"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
@@ -31,10 +36,12 @@
             <RowDefinition Height="30"/>
             <RowDefinition Height="30"/>
             <RowDefinition Height="30"/>
+            <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
-        <Rectangle Grid.Row="3" Grid.ColumnSpan="4" Stroke="Black" Height="1" StrokeThickness="4" Margin="0,0,0,0" VerticalAlignment="Bottom"/>
+        <Rectangle Grid.Row="4" Grid.ColumnSpan="5" Stroke="Black" Height="1" StrokeThickness="4" Margin="0,0,0,0" VerticalAlignment="Bottom"/>
         <Label Content="Sound control" Padding="0" VerticalAlignment="Top"  Grid.ColumnSpan="4" HorizontalAlignment="Stretch"/>
         <Label Content="Def." Padding="0" Grid.Column="2" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+        <Label Content="Mute" Padding="0" Grid.Column="3" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
         <Label Content="Alert sound" Grid.Row="1" Padding="0" Margin="5,0"/>
         <TextBox Grid.Row="1" Grid.Column="1" Margin="5" MouseDoubleClick="TextBox_MouseDoubleClick" Tag="A">
             <TextBox.Style>
@@ -49,8 +56,9 @@
             </TextBox.Style>
         </TextBox>
         <CheckBox Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding DefAlertChecked}"/>
-        <Button Grid.Row="1" Grid.Column="3" Command="{Binding PlayCommand}" CommandParameter="A" Width="20" Height="20" Padding="0" Margin="2">
-            <Image Source="Resources/play.png" Stretch="Fill"/>
+        <CheckBox Grid.Row="1" Grid.Column="3" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding MuteAlertChecked}"/>
+        <Button Grid.Row="1" Grid.Column="4" Command="{Binding PlayCommand}" CommandParameter="A" Width="20" Height="20" Padding="0" Margin="2">
+            <Image Source="../Resources/play.png" Stretch="Fill"/>
         </Button>
         <Label Content="Win sound" Grid.Row="2" Padding="0" Margin="5,0"/>
         <TextBox Grid.Row="2" Grid.Column="1" Margin="5" MouseDoubleClick="TextBox_MouseDoubleClick" Tag="W">
@@ -66,8 +74,9 @@
             </TextBox.Style>
         </TextBox>
         <CheckBox Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding DefWinChecked}"/>
-        <Button Grid.Row="2" Grid.Column="3" Command="{Binding PlayCommand}" CommandParameter="W" Width="20" Height="20" Padding="0" Margin="2">
-            <Image Source="Resources/play.png" Stretch="Fill"/>
+        <CheckBox Grid.Row="2" Grid.Column="3" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding MuteWinChecked}"/>
+        <Button Grid.Row="2" Grid.Column="4" Command="{Binding PlayCommand}" CommandParameter="W" Width="20" Height="20" Padding="0" Margin="2">
+            <Image Source="../Resources/play.png" Stretch="Fill"/>
         </Button>
         <Label Content="Lose sound" Grid.Row="3" Padding="0" Margin="5,0"/>
         <TextBox Grid.Row="3" Grid.Column="1" Margin="5" MouseDoubleClick="TextBox_MouseDoubleClick" Tag="L">
@@ -83,8 +92,27 @@
             </TextBox.Style>
         </TextBox>
         <CheckBox Grid.Row="3" Grid.Column="2" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding DefLoseChecked}"/>
-        <Button Grid.Row="3" Grid.Column="3" Command="{Binding PlayCommand}" CommandParameter="L" Width="20" Height="20" Padding="0" Margin="2">
-            <Image Source="Resources/play.png" Stretch="Fill"/>
+        <CheckBox Grid.Row="3" Grid.Column="3" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding MuteLoseChecked}"/>
+        <Button Grid.Row="3" Grid.Column="4" Command="{Binding PlayCommand}" CommandParameter="L" Width="20" Height="20" Padding="0" Margin="2">
+            <Image Source="../Resources/play.png" Stretch="Fill"/>
+        </Button>
+        <Label Content="Crush sound" Grid.Row="4" Padding="0" Margin="5,0"/>
+        <TextBox Grid.Row="4" Grid.Column="1" Margin="5" MouseDoubleClick="TextBox_MouseDoubleClick" Tag="CR">
+            <TextBox.Style>
+                <Style TargetType="TextBox" BasedOn="{StaticResource def_txt}">
+                    <Setter Property="Text" Value="{Binding LoseName, Mode=OneWay}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DefLoseChecked, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" Value="true">
+                            <Setter Property="Text" Value="Def crush.wav"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBox.Style>
+        </TextBox>
+        <CheckBox Grid.Row="4" Grid.Column="2" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding DefCrushChecked}"/>
+        <CheckBox Grid.Row="4" Grid.Column="3" VerticalAlignment="Center" Margin="5,0" IsChecked="{Binding MuteCrushChecked}"/>
+        <Button Grid.Row="4" Grid.Column="4" Command="{Binding PlayCommand}" CommandParameter="CR" Width="20" Height="20" Padding="0" Margin="2">
+            <Image Source="../Resources/play.png" Stretch="Fill"/>
         </Button>
     </Grid>
 </UserControl>

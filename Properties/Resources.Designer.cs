@@ -72,6 +72,15 @@ namespace Har_reader.Properties {
         /// <summary>
         ///   Поиск локализованного ресурса типа System.IO.UnmanagedMemoryStream, аналогичного System.IO.MemoryStream.
         /// </summary>
+        internal static System.IO.UnmanagedMemoryStream crush {
+            get {
+                return ResourceManager.GetStream("crush", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Поиск локализованного ресурса типа System.IO.UnmanagedMemoryStream, аналогичного System.IO.MemoryStream.
+        /// </summary>
         internal static System.IO.UnmanagedMemoryStream lose {
             get {
                 return ResourceManager.GetStream("lose", resourceCulture);
@@ -82,8 +91,8 @@ namespace Har_reader.Properties {
         ///   Ищет локализованную строку, похожую на {
         ///  &quot;type&quot;: &quot;service_account&quot;,
         ///  &quot;project_id&quot;: &quot;odyseeyproj&quot;,
-        ///  &quot;private_key_id&quot;: &quot;4a113e813b3523718488709860b7d264fe037aa3&quot;,
-        ///  &quot;private_key&quot;: &quot;-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDcuAi+kqJHyobR\n21zYTQcpgd3F25rS285zTSG3cyXUcNUeOLYWBz4f6myo/s1gAI4MSWMojDJBqVDD\nqQSXv0q1HsVgYn8fHI502YnTUhK5SiMgkJxm2B/busFOSqFxBU9yxz0zfsAwYVdx\nqP3dpTeNRqhG9S46NXoOvocVWPtCq8O8s5Yhhy5FBvBe/z+n2p2k0E+MuMbzG6t7\ncNC/l9EsDXAVZCWjs+9byWrxnnvCZRUQF/SydASiMGXTLmngYuUTl+PlV0V/fNw8\nhrhxd9k/Z [остаток строки не уместился]&quot;;.
+        ///  &quot;private_key_id&quot;: &quot;f72c972be4f39b617acb991a046e686abcf49e0e&quot;,
+        ///  &quot;private_key&quot;: &quot;-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDR4s6lhk62rN6Y\nY4r1pkvwO6y4+Dr4qp3NpzAOu63DMRNWixBTKtFK2BoOrJ0R3SuknDCCgWhYwdxF\npKFnWI7NDJOkMcsZay6nb6J256mGUIndKidoh1Hmg9MB1LuvaE63yi/iwtieJYhI\nS8m/95CPtH1XUJOO6pbLZI5vpxDkQtTZrJcJ3gs9BThOWgEfZbKGpMg+OfcsLX8B\n5S/+mLBu2z+PtNVrL4oRsnzXmXm/izKBGqXK2iijSCSM/XfGWd2mzX0utf3NV4oi\n3seFQRP46 [остаток строки не уместился]&quot;;.
         /// </summary>
         internal static string odyseeyproj_4a113e813b35 {
             get {

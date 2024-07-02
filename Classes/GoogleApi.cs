@@ -141,14 +141,12 @@ namespace Har_reader
             {
                 RowData row = new RowData();
                 row.Values = new List<CellData>
-                {
-                    //row.Values.Add(new CellData()
-                    //{
-                    //    UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
-                    //    UserEnteredValue = new ExtendedValue() { NumberValue = item.Time_normal.ToOADate() },
-                    //}
-                    //);
+                {                    
                     new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } },
+                    new CellData() {
+                        UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
+                        UserEnteredValue = new ExtendedValue() { NumberValue = item.DateOfGame.ToOADate() },
+                    },
                     new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameCrash } }
                 };
                 if (item.Profit < 0)
@@ -222,6 +220,7 @@ namespace Har_reader
                 RowData row = new RowData();
                 row.Values = new List<CellData>();
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Game ID" } });
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Game Date" } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Crash value" } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Lose value" } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Win value" } });

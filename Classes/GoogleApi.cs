@@ -5,9 +5,35 @@ using Google.Apis.Sheets.v4.Data;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MathNet.Numerics.Statistics;
 
 namespace Har_reader
 {
+    public class SavedData : Proper
+    {
+        private Dictionary<long, double> saved = new Dictionary<long, double>();
+
+        public SavedData()
+        {
+
+        }
+        public Dictionary<long, double> Saved { get => saved; set => SetProperty(ref saved, value); }
+        public double GetMedian(int counter)
+        {
+            return Saved.Values.TakeLast(counter).Median();
+        }
+        public void AddRange(IEnumerable<UnitedSockMess> us)
+        {
+            foreach (var item in us)
+            {
+                if (!Saved.TryAdd(item.GameId, item.GameCrash.HasValue ? item.GameCrash.Value : 1))
+                {
+                    //КЛЮЧ УЖЕ БЫЛ
+                    System.Diagnostics.Debug.WriteLine($"{item.GameId} tried again add");
+                }
+            }
+        }
+    }
     public class GoogleApi : IStatusSender
     {
         static string[] Scopes = { SheetsService.Scope.Spreadsheets };
@@ -44,7 +70,8 @@ namespace Har_reader
         List<Sheet> DocSheets { get; set; }
         SheetsService Service { get; set; }
         Sheet MySheet => DocSheets.SingleOrDefault(t => t.Properties.Title == MyUserName);
-        private List<long> Saved = new List<long>();
+        //private List<long> Saved { get; set; } =  new List<long>();
+        public SavedData SavedData { get; set; } = new SavedData();
         public bool SaveInProgress { get; set; } = false;
         private void SetConnAndRead()
         {
@@ -70,11 +97,17 @@ namespace Har_reader
             DocSheets = response.Sheets.ToList();
             if (MySheet != null)
             {
-                var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"{MySheet.Properties.Title}!A2:A").Execute();
+                //var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"{MySheet.Properties.Title}!A2:A").Execute();
+                var val = Service.Spreadsheets.Values.Get(SpreadSheetId, $"Conclusion!A2:C").Execute();
                 if (val.Values != null)
                 {
-                    Saved = val.Values.Select(t => long.Parse(t[0].ToString())).ToList();
-                    if (Saved.Count > MySheet.Properties.GridProperties.RowCount - 1000)
+                    foreach (var item in val.Values)
+                    {
+                        var _id = long.Parse(item[0].ToString());
+                        var _val = float.Parse(item[2].ToString());
+                        SavedData.Saved.Add(_id, _val);
+                    }
+                    if (SavedData.Saved.Count > MySheet.Properties.GridProperties.RowCount - 1000)
                     {
                         AddEmptyRows(10000);
                     }
@@ -94,7 +127,7 @@ namespace Har_reader
                     }
 
                     StatusChanged?.Invoke("Saving Data to google");
-                    var buf = mess.Select(t => t.GameId).Except(Saved);
+                    var buf = mess.Select(t => t.GameId).Except(SavedData.Saved.Keys);
                     if (buf.Count() < 1)
                     {
                         StatusChanged?.Invoke("Nothing to save");
@@ -103,8 +136,9 @@ namespace Har_reader
                     SaveInProgress = true;
                     if (Service is null)
                         SetConnAndRead();
-                    InsertLogData(mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null));
-                    Saved.AddRange(buf);
+                    var to_save = mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null);
+                    InsertLogData(to_save);
+                    SavedData.AddRange(to_save);
                     StatusChanged?.Invoke("Saved!");
                     SaveInProgress = false;
                 }
@@ -114,7 +148,6 @@ namespace Har_reader
                 }
 
             });
-
         }
         private void InsertLogData(IEnumerable<UnitedSockMess> mess)
         {
@@ -141,7 +174,7 @@ namespace Har_reader
             {
                 RowData row = new RowData();
                 row.Values = new List<CellData>
-                {                    
+                {
                     new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } },
                     new CellData() {
                         UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },

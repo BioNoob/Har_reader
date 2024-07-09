@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -7,6 +8,25 @@ using System.Windows.Input;
 
 namespace Har_reader
 {
+    public class ExtendedDictonary<TKey, TValue> : Dictionary<TKey, TValue>
+    {
+        public ExtendedDictonary() : base() 
+        {
+            //this.
+        }
+        new public bool TryAdd(TKey key, TValue value)
+        {
+            CollectionChanged?.Invoke(this, EventArgs.Empty);
+            return base.TryAdd(key, value);
+        }
+        new public void Add(TKey key, TValue value)
+        {
+            CollectionChanged?.Invoke(this, EventArgs.Empty);
+            base.Add(key, value);
+        }
+        ExtendedDictonary(int capacity) : base(capacity) { }
+        public event EventHandler CollectionChanged;
+    }
     public class IsNullConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -6,32 +6,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MathNet.Numerics.Statistics;
+using System.Collections.ObjectModel;
+using System;
 
 namespace Har_reader
 {
     public class SavedData : Proper
     {
-        private Dictionary<long, double> saved = new Dictionary<long, double>();
-
+        public long Id { get; set; }
+        public DateTime Dt { get; set; }
+        public double Crash { get; set; }
+        public double Profit { get; set; }
         public SavedData()
         {
-
-        }
-        public Dictionary<long, double> Saved { get => saved; set => SetProperty(ref saved, value); }
-        public double GetMedian(int counter)
-        {
-            return Saved.Values.TakeLast(counter).Median();
-        }
-        public void AddRange(IEnumerable<UnitedSockMess> us)
-        {
-            foreach (var item in us)
-            {
-                if (!Saved.TryAdd(item.GameId, item.GameCrash.HasValue ? item.GameCrash.Value : 1))
-                {
-                    //КЛЮЧ УЖЕ БЫЛ
-                    System.Diagnostics.Debug.WriteLine($"{item.GameId} tried again add");
-                }
-            }
+            Id = -1;
+            Dt = new DateTime();
+            Crash = 0d;
+            Profit = 0d;
         }
     }
     public class GoogleApi : IStatusSender
@@ -71,8 +62,13 @@ namespace Har_reader
         SheetsService Service { get; set; }
         Sheet MySheet => DocSheets.SingleOrDefault(t => t.Properties.Title == MyUserName);
         //private List<long> Saved { get; set; } =  new List<long>();
-        public SavedData SavedData { get; set; } = new SavedData();
+        private List<SavedData> SavedData { get; set; } = new List<SavedData>();
+        public List<SavedData> ToSave { get; set; } = new List<SavedData>();
         public bool SaveInProgress { get; set; } = false;
+        public double GetMedian(int counter)
+        {
+            return SavedData.Concat(ToSave).TakeLast(counter).Select(t => t.Crash).Median();
+        }
         private void SetConnAndRead()
         {
             Service = AuthorizeGoogleApp();
@@ -105,16 +101,16 @@ namespace Har_reader
                     {
                         var _id = long.Parse(item[0].ToString());
                         var _val = float.Parse(item[2].ToString());
-                        SavedData.Saved.Add(_id, _val);
+                        SavedData.Add(new SavedData() { Id = _id, Crash = _val });
                     }
-                    if (SavedData.Saved.Count > MySheet.Properties.GridProperties.RowCount - 1000)
+                    if (SavedData.Count > MySheet.Properties.GridProperties.RowCount - 1000)
                     {
                         AddEmptyRows(10000);
                     }
                 }
             }
         }
-        public async void DoSheetSave(IEnumerable<UnitedSockMess> mess)
+        public async void DoSheetSave()//IEnumerable<UnitedSockMess> mess)
         {
             await Task.Run(() =>
             {
@@ -125,31 +121,37 @@ namespace Har_reader
                         StatusChanged?.Invoke("No profile to save");
                         return;
                     }
-
-                    StatusChanged?.Invoke("Saving Data to google");
-                    var buf = mess.Select(t => t.GameId).Except(SavedData.Saved.Keys);
-                    if (buf.Count() < 1)
+                    if (ToSave.Count < 1)
                     {
-                        StatusChanged?.Invoke("Nothing to save");
+                        StatusChanged?.Invoke("No new data to save");
                         return;
                     }
+                    
+                    StatusChanged?.Invoke("Saving Data to google");
+                    //var buf = mess.Select(t => t.GameId).Except(SavedData.Saved.Keys);
+                    //if (buf.Count() < 1)
+                    //{
+                    //    StatusChanged?.Invoke("Nothing to save");
+                    //    return;
+                    //}
                     SaveInProgress = true;
                     if (Service is null)
                         SetConnAndRead();
-                    var to_save = mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null);
-                    InsertLogData(to_save);
-                    SavedData.AddRange(to_save);
+                    //var to_save = mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null);
+                    InsertLogData();
+                    SavedData.AddRange(ToSave);
+                    ToSave.Clear();
                     StatusChanged?.Invoke("Saved!");
                     SaveInProgress = false;
                 }
-                catch (System.Exception)
+                catch (Exception)
                 {
                     StatusChanged?.Invoke("Error on save!");
                 }
 
             });
         }
-        private void InsertLogData(IEnumerable<UnitedSockMess> mess)
+        private void InsertLogData()
         {
             CheckSheetsExist();
             StatusChanged?.Invoke("Generate insert request");
@@ -158,7 +160,7 @@ namespace Har_reader
             aprq.SheetId = MySheet.Properties.SheetId;
             aprq.Fields = "*";//"userEnteredValue";
             aprq.Rows = new List<RowData>();
-            var aq = new List<UnitedSockMess>();
+            //var aq = new List<UnitedSockMess>();
             //mess.Select(o => o.GameId).Distinct().ToList().ForEach(w =>
             //  {
             //      var id_mess = mess.Where(t => t.GameId == w);
@@ -169,29 +171,20 @@ namespace Har_reader
             //          aq.Add(a);
             //      }
             //  });
-            aq = new List<UnitedSockMess>(mess.OrderBy(t => t.GameId));
+            var aq = new List<SavedData>(ToSave.OrderBy(t => t.Id)); //new List<UnitedSockMess>(mess.OrderBy(t => t.GameId));
             foreach (var item in aq)
             {
                 RowData row = new RowData();
                 row.Values = new List<CellData>
                 {
-                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameId } },
+                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Id } },
                     new CellData() {
                         UserEnteredFormat = new CellFormat() { NumberFormat = new NumberFormat() { Type = "DATE_TIME", Pattern = "dd.MM.yyyy hh:mm:ss" }, },
-                        UserEnteredValue = new ExtendedValue() { NumberValue = item.DateOfGame.ToOADate() },
+                        UserEnteredValue = new ExtendedValue() { NumberValue = item.Dt.ToOADate() },
                     },
-                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.GameCrash } }
+                    new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Crash } }
                 };
-                if (item.Profit < 0)
-                {
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
-                }
-                if (item.Profit > 0)
-                {
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "" } });
-                    row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });
-                }
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { NumberValue = item.Profit } });
                 aprq.Rows.Add(row);
             }
             rq.AppendCells = aprq;
@@ -220,7 +213,7 @@ namespace Har_reader
                 valgetreq.ValueRenderOption = SpreadsheetsResource.ValuesResource.GetRequest.ValueRenderOptionEnum.FORMULA;
                 var formula = valgetreq.Execute().Values[0][0].ToString();
                 //докинули в формулу сбоку новый лист по юзеру
-                formula = formula.Replace("};", $";{MyUserName}!A2:B" + "};");
+                formula = formula.Replace("};", $";{MyUserName}!A2:C" + "};");
                 UpdateCellsRequest ucr = new UpdateCellsRequest();
                 ucr.Fields = "*";
                 ucr.Rows = new List<RowData>();
@@ -255,8 +248,7 @@ namespace Har_reader
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Game ID" } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Game Date" } });
                 row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Crash value" } });
-                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Lose value" } });
-                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Win value" } });
+                row.Values.Add(new CellData() { UserEnteredValue = new ExtendedValue() { StringValue = "Profit value" } });
                 aprq.Rows.Add(row);
                 BatchUpdateSpreadsheetRequest updateRequest = new BatchUpdateSpreadsheetRequest
                 {

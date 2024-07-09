@@ -1,4 +1,5 @@
-﻿using Har_reader.Properties;
+﻿using Har_reader.Models;
+using Har_reader.Properties;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -29,6 +30,7 @@ namespace Har_reader
         private Profile profile;
         private BetsModel bM;
         private CalcBetsModel cBM;
+        private MedianModel mM;
         private bool expEnabled;
         private Bet CurrBet = null;
         private int crashCount;
@@ -64,6 +66,7 @@ namespace Har_reader
         public BetsModel BM { get => bM; set => SetProperty(ref bM, value); }
         public SoundControlModel SM { get => sM; set => SetProperty(ref sM, value); }
         public CalcBetsModel CBM { get => cBM; set => SetProperty(ref cBM, value); }
+        public MedianModel MM { get => mM; set => SetProperty(ref mM, value); }
         public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
         public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
         public int CurrSaveCounter { get; set; } = 0;
@@ -74,6 +77,7 @@ namespace Har_reader
             BM = new BetsModel();
             SM = new SoundControlModel();
             CBM = new CalcBetsModel();
+            MM = new MedianModel();
             BM.OnReqBet += BM_OnReqBet;
             BM.AlertValCounter = Settings.Default.AlertVal;
             BM.LowerCheckVal = Settings.Default.LowerVal;
@@ -97,6 +101,12 @@ namespace Har_reader
             gp.StatusChanged += Gp_StatusChanged;
             BM.PropertyChanged += BM_PropertyChanged;
             Profile.PropertyChanged += PunkValueChanged;
+            MM.RequestMedianEvent += MM_RequestMedianEvent;
+        }
+
+        private void MM_RequestMedianEvent()
+        {
+            MM.CalcMedian = gp.GetMedian(MM.Counter);
         }
 
         private void BM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -116,23 +126,26 @@ namespace Har_reader
         }
         private void USmes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            int last = CrashCount;
-            CrashCount = USmes.Count();
-            CurrSaveCounter += CrashCount - last;
-            if (AutoSaveCounter != 0 && permition_to_save)
+            if (e.Action == NotifyCollectionChangedAction.Add)
             {
-                if (CurrSaveCounter >= AutoSaveCounter)
+                int last = CrashCount;
+                CrashCount = USmes.Where(t => t.IsCrashed).Count();
+                CurrSaveCounter += CrashCount - last;
+                if (AutoSaveCounter != 0 && permition_to_save)
                 {
-                    gp.DoSheetSave(USmes);
-                    CurrSaveCounter = 0;
+                    if (CurrSaveCounter >= AutoSaveCounter)
+                    {
+                        gp.DoSheetSave();
+                        CurrSaveCounter = 0;
+                    }
+                    else
+                    {
+                        if (!gp.SaveInProgress)
+                            SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
+                    }
                 }
-                else
-                {
-                    if (!gp.SaveInProgress)
-                        SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
-                }
+                ExpEnabled = CrashCount > 0 ? true : false;
             }
-            ExpEnabled = CrashCount > 0 ? true : false;
         }
         private void Client_TimerUpdated(TimerMess type, double val)
         {
@@ -186,7 +199,7 @@ namespace Har_reader
                         if (AlertSignalOn) AlertSignalOn = false;
                     }
                     CBM.SetData(Counter_lowers, BM.Bet.BetVal);
-                    SM.GetSound(SoundControlModel.SoundEnum.CrushSound).Play();
+                    SM.GetSound(SoundControlModel.SoundEnum.CrushSound)?.Play();
                     break;
                 case IncomeMessageType.bets:
                     if (HandledBet)
@@ -210,7 +223,7 @@ namespace Har_reader
                 case IncomeMessageType.win:
                     //WIN by AutoCashOut
                     //Debug.WriteLine($"BALANCE FROM {Profile.Balance.NormalPunk} UP TO {Profile.Balance.NormalPunk + CurrBet.Profit}");
-                    SM.GetSound(SoundControlModel.SoundEnum.WinSnd).Play();
+                    SM.GetSound(SoundControlModel.SoundEnum.WinSnd)?.Play();
                     HandledBet = false;
                     mess.ProfitData = mess.GetTickdData.MyCashOut.NValue * CurrBet.BetVal - CurrBet.BetVal;
                     Profile.Balance.SetPunk(Profile.Balance.NormalPunk + mess.ProfitData + CurrBet.BetVal);
@@ -218,7 +231,7 @@ namespace Har_reader
                     CBM.SetData(Counter_lowers, BM.Bet.BetVal);
                     break;
                 case IncomeMessageType.lose:
-                    SM.GetSound(SoundControlModel.SoundEnum.LoseSnd).Play();
+                    SM.GetSound(SoundControlModel.SoundEnum.LoseSnd)?.Play();
                     HandledBet = false;
                     mess.ProfitData = -1 * CurrBet.BetVal;
                     mess.ReviewData = $"Lose {CurrBet.BetVal.ToString("0.##", CultureInfo.InvariantCulture)}";
@@ -232,7 +245,7 @@ namespace Har_reader
                     Is_connected = false;
                     BM.BetsEnabled = false;
                     CBM.UseData = false;
-                    Profile.SetByAnotherProfile(new Profile());
+                    //Profile.SetByAnotherProfile(new Profile() {Username = "" });
                     TimerStatus = "Disconnected";
                     break;
                 default:
@@ -240,6 +253,11 @@ namespace Har_reader
             }
             if (mess is null)
                 return;
+            if (type == IncomeMessageType.game_crash)
+                permition_to_save = true;
+            else
+                permition_to_save = false;
+
             if (USmes.Any(w => w.GameId == mess.GameId))
             {
                 USmes.Single(w => w.GameId == mess.GameId).SetDataByMess(type, mess);
@@ -250,10 +268,13 @@ namespace Har_reader
                 x.SetDataByMess(type, mess);
                 USmes.Insert(0, x);
             }
-            if (type == IncomeMessageType.game_crash)
-                permition_to_save = true;
-            else
-                permition_to_save = false;
+            var q = USmes.Single(w => w.GameId == mess.GameId);
+            if (q.IsCrashed)
+            {
+                gp.ToSave.Add(new SavedData() { Id = q.GameId, Crash = q.GameCrash.Value, Profit = q.Profit, Dt = q.DateOfGame });
+                MM.CalcMedian = gp.GetMedian(MM.Counter);
+            }
+                
         }
         private void Client_StatusChanged(string txt)
         {
@@ -285,9 +306,10 @@ namespace Har_reader
                 return _exitcommand ??= new CommandHandler(obj =>
                 {
                     Client.StopClient();
-                    gp.DoSheetSave(USmes);
+                    gp.DoSheetSave();
                     SM.SaveSettings();
                     CBM.SaveSettings();
+                    MM.SaveSettings();
                     Settings.Default.AlertVal = BM.AlertValCounter;
                     Settings.Default.LowerVal = BM.LowerCheckVal;
                     Settings.Default.BetVal = BM.Bet.BetVal;
@@ -307,7 +329,7 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
-                    gp.DoSheetSave(USmes);
+                    gp.DoSheetSave();
                 },
                 (obj) => true
                 );

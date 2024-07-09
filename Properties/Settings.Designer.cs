@@ -130,5 +130,17 @@ namespace Har_reader.Properties {
                 this["CalcMulty"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        public int MedianCount {
+            get {
+                return ((int)(this["MedianCount"]));
+            }
+            set {
+                this["MedianCount"] = value;
+            }
+        }
     }
 }

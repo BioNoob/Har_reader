@@ -31,86 +31,86 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Grid Margin="5,0,5,5">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Label Content="Bet calculation" Padding="0" VerticalAlignment="Top" Margin="5,0,0,5"/>
-            <Label Content="For" Grid.Column="1" VerticalAlignment="Bottom" FontSize="11" Margin="5,0,0,0" Padding="0"/>
-            <Label Grid.Column="2" VerticalAlignment="Bottom" FontSize="11" Margin="5,0,0,0" Padding="0" ContentStringFormat="{}{0:F3}$P">
-                <Label.Resources>
-                    <local:IsNullConverter x:Key="Convert"/>
-                </Label.Resources>
-                <Label.Style>
-                    <Style TargetType="Label">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding DataBalance, Converter={StaticResource Convert}}" Value="true">
-                                <Setter Property="Content" Value="Max bet 80"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding DataBalance, Converter={StaticResource Convert}}" Value="false">
-                                <Setter Property="Content" Value="{Binding DataBalance}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                        
-                    </Style>
-                </Label.Style>
-            </Label>
-        </Grid>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="40"/>
-            </Grid.ColumnDefinitions>
+    <Grid Margin="5,0,5,5" HorizontalAlignment="Center">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <TextBox Grid.Row="2" Margin="6,0,1,0" Grid.Column="0" Text="{Binding StepS1}" Width="{Binding ElementName=StepCol, Path=ActualWidth}"  
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Bet calculation" Padding="0" VerticalAlignment="Top" Margin="5,0,0,5"/>
+                <Label Content="For" Grid.Column="1" VerticalAlignment="Bottom" FontSize="11" Margin="5,0,0,0" Padding="0"/>
+                <Label Grid.Column="2" VerticalAlignment="Bottom" FontSize="11" Margin="5,0,0,0" Padding="0" ContentStringFormat="{}{0:F3}$P">
+                    <Label.Resources>
+                        <local:IsNullConverter x:Key="Convert"/>
+                    </Label.Resources>
+                    <Label.Style>
+                        <Style TargetType="Label">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataBalance, Converter={StaticResource Convert}}" Value="true">
+                                    <Setter Property="Content" Value="Max bet 80"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding DataBalance, Converter={StaticResource Convert}}" Value="false">
+                                    <Setter Property="Content" Value="{Binding DataBalance}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+
+                        </Style>
+                    </Label.Style>
+                </Label>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBox Grid.Row="2" Margin="6,0,1,0" Grid.Column="0" Text="{Binding StepS1}" Width="{Binding ElementName=StepCol, Path=ActualWidth}"  
                      PreviewTextInput="TextBox_PreviewTextInputInt" TextChanged="TextBox_TextChanged" >
-                <TextBox.Style>
-                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding UseData}" Value="true">
-                                <Setter Property="IsReadOnly" Value="True"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
-            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,0,1,0" Text="{Binding BetS1,StringFormat={}{0:F2}}" Width="{Binding ElementName=BetCol, Path=ActualWidth}"  
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UseData}" Value="true">
+                                    <Setter Property="IsReadOnly" Value="True"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,0,1,0" Text="{Binding BetS1,StringFormat={}{0:F2}}" Width="{Binding ElementName=BetCol, Path=ActualWidth}"  
                      PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged">
-                <TextBox.Style>
-                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding UseData}" Value="true">
-                                <Setter Property="IsReadOnly" Value="True"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
-            <TextBox Grid.Row="2" Grid.Column="2" Margin="0,0,1,0" IsReadOnly="True" Text="{Binding BetS1, StringFormat={}{0:F2}}" Width="{Binding ElementName=SumCol, Path=ActualWidth}" />
-        </Grid>
-        <DataGrid ItemsSource="{Binding Calculations}" Margin="0,5" Grid.Row="2"
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UseData}" Value="true">
+                                    <Setter Property="IsReadOnly" Value="True"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <TextBox Grid.Row="2" Grid.Column="2" Margin="0,0,1,0" IsReadOnly="True" Text="{Binding BetS1, StringFormat={}{0:F2}}" Width="{Binding ElementName=SumCol, Path=ActualWidth}" />
+            </Grid>
+            <DataGrid ItemsSource="{Binding Calculations}" Margin="0,5" Grid.Row="2"
                   AutoGenerateColumns="false" x:Name="grid" CanUserAddRows="False" CanUserResizeRows="False" 
                   VerticalScrollBarVisibility="Visible" HorizontalGridLinesBrush="DarkGray" IsReadOnly="True"
                   SelectionMode="Single" SelectionUnit="FullRow" CanUserDeleteRows="False" CanUserReorderColumns="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Step" Width="40" MinWidth="40" Binding="{Binding Step}" x:Name="StepCol"/>
-                <DataGridTextColumn Header="Bet" MinWidth="50" Width="50" Binding="{Binding Bet, StringFormat={}{0:F2}}" x:Name="BetCol"/>
-                <DataGridTextColumn Header="Summ" MinWidth="50" Width="*" Binding="{Binding Sum, StringFormat={}{0:F2}}" x:Name="SumCol"/>
-            </DataGrid.Columns>
+                    <DataGridTextColumn Header="Bet" MinWidth="50" Width="50" Binding="{Binding Bet, StringFormat={}{0:F2}}" x:Name="BetCol"/>
+                    <DataGridTextColumn Header="Summ" MinWidth="50" Width="*" Binding="{Binding Sum, StringFormat={}{0:F2}}" x:Name="SumCol"/>
+                </DataGrid.Columns>
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Style.Triggers>
@@ -121,40 +121,42 @@
                     </Style>
                 </DataGrid.RowStyle>
             </DataGrid>
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
+            <Grid Grid.Row="3" HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="AUto"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition/>
+                <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <!--<Label Grid.Row="0" Content="Max Step" Grid.Column="0" HorizontalContentAlignment="Right"/>-->
-            <!--<Label Content="Use data from log" Grid.Column="1" HorizontalContentAlignment="Center" HorizontalAlignment="Center"/>-->
-            <!--<TextBox Grid.Row="2" Text="{Binding MaxStep}" Margin="-4,0,0,0" Width="{Binding ElementName=StepCol, Path=ActualWidth}" ToolTip="Without balance"  PreviewTextInput="TextBox_PreviewTextInputInt" TextChanged="TextBox_TextChanged"
+                <!--<Label Grid.Row="0" Content="Max Step" Grid.Column="0" HorizontalContentAlignment="Right"/>-->
+                <!--<Label Content="Use data from log" Grid.Column="1" HorizontalContentAlignment="Center" HorizontalAlignment="Center"/>-->
+                <!--<TextBox Grid.Row="2" Text="{Binding MaxStep}" Margin="-4,0,0,0" Width="{Binding ElementName=StepCol, Path=ActualWidth}" ToolTip="Without balance"  PreviewTextInput="TextBox_PreviewTextInputInt" TextChanged="TextBox_TextChanged"
                      Grid.Column="0"/>-->
-            <ToggleButton Grid.Row="2" Height="20" Grid.Column="0" Width="40" HorizontalAlignment="Left" 
+                <ToggleButton Grid.Row="1" Height="20" Grid.Column="0" Width="40" HorizontalAlignment="Left" 
                           IsChecked="{Binding UseData}" VerticalAlignment="Center" HorizontalContentAlignment="Center">
-                <ToggleButton.Style>
-                    <Style TargetType="ToggleButton">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding UseData}" Value="true">
-                                <Setter Property="Content" Value="Yes"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding UseData}" Value="false">
-                                <Setter Property="Content" Value="No"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ToggleButton.Style>
-            </ToggleButton>
-            <Label Grid.Row="0" Content="Use log data" Grid.Column="1" HorizontalAlignment="Left" Margin="5,0,5,0"/>
-            <!--<CheckBox  IsChecked="{Binding UseData}"  Content="Use data from log"
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UseData}" Value="true">
+                                    <Setter Property="Content" Value="Yes"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding UseData}" Value="false">
+                                    <Setter Property="Content" Value="No"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                <Label Grid.Row="0" Content="Use log data" Grid.Column="0" HorizontalAlignment="Left" Margin="0,0,0,5" Padding="0"/>
+                <!--<CheckBox  IsChecked="{Binding UseData}"  Content="Use data from log"
                   Padding="5,0,0,0" Margin="5,5,0,5" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>-->
-            <Label Grid.Row="0" Content="Multiply" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,5,0"/>
-            <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding Multiply}" Width="25" VerticalContentAlignment="Center" Height="20"
+                <Label Grid.Row="0" Content="Multiply" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,0,5" Padding="0"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Multiply}" Width="25" VerticalContentAlignment="Center" Height="20" HorizontalAlignment="Right"
                      HorizontalContentAlignment="Center" PreviewTextInput="TextBox_PreviewTextInput" TextChanged="TextBox_TextChanged"/>
+            <Rectangle Stroke="Black" Height="1" StrokeThickness="4" VerticalAlignment="Bottom" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,5,0,0"/>
         </Grid>
-    </Grid>
+        </Grid>
 </UserControl>

@@ -12,6 +12,7 @@ namespace Har_reader
         private string dopData;
         private double? gameCrash;
         private bool gameCrashLower;
+        private bool isCrashed;
         private string profitStr;
         private DateTime dateOfGame;
 
@@ -53,7 +54,7 @@ namespace Har_reader
                     return null;
             }
         }
-
+        public bool IsCrashed { get => isCrashed; set => SetProperty(ref isCrashed, value); }
         public string StatusImage { get => statusImage; set => SetProperty(ref statusImage, value); }
         public double? GameCrash { get => gameCrash; set => SetProperty(ref gameCrash, value); }
         public bool GameCrashLower { get => gameCrashLower; set => SetProperty(ref gameCrashLower, value); }
@@ -62,6 +63,7 @@ namespace Har_reader
         {
             GameId = game;
             GameCrash = null;
+            IsCrashed = false;
         }
         public void SetDataByMess(IncomeMessageType type, _webSocketMessages mes)
         {
@@ -83,6 +85,7 @@ namespace Har_reader
                     StatusImage = "Resources/explosion.png";
                     GameCrash = mes.GetCrashData.Game_crash_normal;
                     GameCrashLower = mes.GetCrashData.Lower;
+                    IsCrashed = true;
                     break;
                 case IncomeMessageType.bet_accepted:
                     StatusImage = "Resources/chip.png";

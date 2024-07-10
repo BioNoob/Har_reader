@@ -20,7 +20,6 @@ namespace Har_reader
         private bool alertsignalon;
         private string status;
         private bool is_connected = false;
-        private bool permition_to_save = false;
         private OdysseyClient client;
         private CommandHandler _connCommand;
         private CommandHandler _exitcommand;
@@ -31,17 +30,17 @@ namespace Har_reader
         private BetsModel bM;
         private CalcBetsModel cBM;
         private MedianModel mM;
+        private SoundControlModel sM;
+        private GoogleApi gP;
         private bool expEnabled;
         private Bet CurrBet = null;
         private int crashCount;
-        private int autosavecounter;
         private string saveStatus;
         private string timerStatus;
-        private SoundControlModel sM;
         private bool setsIsOpen;
         private bool HandledBet { get; set; } = false;
         private OdysseyClient Client { get => client; set => SetProperty(ref client, value); }
-        private GoogleApi gp { get; set; }
+        
         public bool SetsIsOpen { get => setsIsOpen; set => SetProperty(ref setsIsOpen, value); }
         public string TimerStatus { get => timerStatus; set => SetProperty(ref timerStatus, value); }
         public string SaveStatus { get => saveStatus; set => SetProperty(ref saveStatus, value); }
@@ -67,9 +66,8 @@ namespace Har_reader
         public SoundControlModel SM { get => sM; set => SetProperty(ref sM, value); }
         public CalcBetsModel CBM { get => cBM; set => SetProperty(ref cBM, value); }
         public MedianModel MM { get => mM; set => SetProperty(ref mM, value); }
-        public int CrashCount { get => crashCount; set => SetProperty(ref crashCount, value); }
-        public int AutoSaveCounter { get => autosavecounter; set => SetProperty(ref autosavecounter, value); }
-        public int CurrSaveCounter { get; set; } = 0;
+        public GoogleApi GP { get => gP; set => SetProperty(ref gP, value); }
+        public int CrashCount { get => crashCount; set { SetProperty(ref crashCount, value); ExpEnabled = value > 0 ? true : false; } }
 
         public MainModel()
         {
@@ -83,22 +81,23 @@ namespace Har_reader
             BM.LowerCheckVal = Settings.Default.LowerVal;
             BM.Bet.BetVal = Settings.Default.BetVal;
             BM.Bet.CashOut = Settings.Default.CashOutVal;
-            AutoSaveCounter = Settings.Default.AutoSaveTime;
             Token = Settings.Default.Token;
-            SaveStatus = "Hello, Im'a save status";
-            Status = "Hello, Im'a status";
             object lockObj = new object();
             BindingOperations.EnableCollectionSynchronization(USmes, lockObj);
             Client = new OdysseyClient();
             Profile = new Profile();
-            gp = new GoogleApi();
+            GP = new GoogleApi();
+            GP.AutoSaveCounter = Settings.Default.AutoSaveTime;
+            SaveStatus = "Hello, Im'a save status";
+            Status = "Hello, Im'a status";
+
             TimerStatus = "Wait new round";
             Profile.Username = "Hello, Im'a your name";
             Profile.Balance.Punk = 0;
             Client.StatusChanged += Client_StatusChanged;
             Client.MessageGeted += Client_MessageGeted;
             Client.TimerUpdated += Client_TimerUpdated;
-            gp.StatusChanged += Gp_StatusChanged;
+            GP.StatusChanged += Gp_StatusChanged;
             BM.PropertyChanged += BM_PropertyChanged;
             Profile.PropertyChanged += PunkValueChanged;
             MM.RequestMedianEvent += MM_RequestMedianEvent;
@@ -106,7 +105,7 @@ namespace Har_reader
 
         private void MM_RequestMedianEvent()
         {
-            MM.CalcMedian = gp.GetMedian(MM.Counter);
+            MM.CalcMedian = GP.GetMedian(MM.Counter);
         }
 
         private void BM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -126,26 +125,26 @@ namespace Har_reader
         }
         private void USmes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Add)
-            {
-                int last = CrashCount;
-                CrashCount = USmes.Where(t => t.IsCrashed).Count();
-                CurrSaveCounter += CrashCount - last;
-                if (AutoSaveCounter != 0 && permition_to_save)
-                {
-                    if (CurrSaveCounter >= AutoSaveCounter)
-                    {
-                        gp.DoSheetSave();
-                        CurrSaveCounter = 0;
-                    }
-                    else
-                    {
-                        if (!gp.SaveInProgress)
-                            SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
-                    }
-                }
-                ExpEnabled = CrashCount > 0 ? true : false;
-            }
+            //if (e.Action == NotifyCollectionChangedAction.Add)
+            //{
+            //    int last = CrashCount;
+            //    CrashCount = USmes.Where(t => t.IsCrashed).Count();
+            //    CurrSaveCounter += CrashCount - last;
+            //    if (AutoSaveCounter != 0 && permition_to_save)
+            //    {
+            //        if (CurrSaveCounter >= AutoSaveCounter)
+            //        {
+            //            gp.DoSheetSave();
+            //            CurrSaveCounter = 0;
+            //        }
+            //        else
+            //        {
+            //            if (!gp.SaveInProgress)
+            //                SaveStatus = $"Waiting new data more { AutoSaveCounter - CurrSaveCounter} times";
+            //        }
+            //    }
+            //    ExpEnabled = CrashCount > 0 ? true : false;
+            //}
         }
         private void Client_TimerUpdated(TimerMess type, double val)
         {
@@ -174,8 +173,10 @@ namespace Har_reader
             {
                 case IncomeMessageType.initial_data:
                     Profile.SetByAnotherProfile(mess.GetProfileData);
-                    gp.SetProfile(Profile);
+                    GP.SetProfile(Profile);
                     //CBM.SetData(Profile.Balance.NormalPunk, null, null);
+                    if (!GP.IsConnected)
+                        GP.SetConnAndRead();
                     break;
                 case IncomeMessageType.game_crash:
                     if (!BM.BetsEnabled)
@@ -253,10 +254,6 @@ namespace Har_reader
             }
             if (mess is null)
                 return;
-            if (type == IncomeMessageType.game_crash)
-                permition_to_save = true;
-            else
-                permition_to_save = false;
 
             if (USmes.Any(w => w.GameId == mess.GameId))
             {
@@ -271,8 +268,9 @@ namespace Har_reader
             var q = USmes.Single(w => w.GameId == mess.GameId);
             if (q.IsCrashed)
             {
-                gp.ToSave.Add(new SavedData() { Id = q.GameId, Crash = q.GameCrash.Value, Profit = q.Profit, Dt = q.DateOfGame });
-                MM.CalcMedian = gp.GetMedian(MM.Counter);
+                CrashCount++;
+                GP.ToSave.Add(new SavedData() { Id = q.GameId, Crash = q.GameCrash.Value, Profit = q.Profit, Dt = q.DateOfGame });
+                MM.CalcMedian = GP.GetMedian(MM.Counter);
             }
                 
         }
@@ -306,7 +304,7 @@ namespace Har_reader
                 return _exitcommand ??= new CommandHandler(obj =>
                 {
                     Client.StopClient();
-                    gp.DoSheetSave();
+                    GP.DoSheetSave();
                     SM.SaveSettings();
                     CBM.SaveSettings();
                     MM.SaveSettings();
@@ -315,7 +313,7 @@ namespace Har_reader
                     Settings.Default.BetVal = BM.Bet.BetVal;
                     Settings.Default.CashOutVal = BM.Bet.CashOut;
                     Settings.Default.Token = Token;
-                    Settings.Default.AutoSaveTime = AutoSaveCounter;
+                    Settings.Default.AutoSaveTime = GP.AutoSaveCounter;
                     Settings.Default.Save();
                     Environment.Exit(1);
                 },
@@ -329,7 +327,7 @@ namespace Har_reader
             {
                 return _savecsvcommand ??= new CommandHandler(obj =>
                 {
-                    gp.DoSheetSave();
+                    GP.DoSheetSave();
                 },
                 (obj) => true
                 );

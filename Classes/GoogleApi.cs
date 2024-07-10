@@ -24,13 +24,19 @@ namespace Har_reader
             Crash = 0d;
             Profit = 0d;
         }
+        public override string ToString()
+        {
+            return $"{Id} {Crash}";
+        }
     }
-    public class GoogleApi : IStatusSender
+    public class GoogleApi : Proper, IStatusSender
     {
         static string[] Scopes = { SheetsService.Scope.Spreadsheets };
         static string ApplicationName = "OdysseySheets";
         static string SpreadSheetId = "1PhQbJpiTdkJYacoNTBvDS2ECvRqjXqDm6VWpi7JwR28";
         private bool ProfileSet = false;
+        private int autoSaveCounter;
+
         public void SetProfile(Profile myProfile)
         {
             ProfileSet = true;
@@ -39,7 +45,17 @@ namespace Har_reader
         }
         public GoogleApi()
         {
+            ToSave.CollectionChanged += ToSave_CollectionChanged;
+        }
 
+        private void ToSave_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (ToSave.Count >= AutoSaveCounter)
+            {
+                DoSheetSave();
+            }
+            else
+                StatusChanged?.Invoke($"Waiting new data more { AutoSaveCounter - ToSave.Count} times");
         }
 
         public event IStatusSender.SendStatus StatusChanged;
@@ -60,21 +76,36 @@ namespace Har_reader
         string MyUserName => MyProfile.Username;
         List<Sheet> DocSheets { get; set; }
         SheetsService Service { get; set; }
+        bool IsConnecting { get; set; } = false;
         Sheet MySheet => DocSheets.SingleOrDefault(t => t.Properties.Title == MyUserName);
         //private List<long> Saved { get; set; } =  new List<long>();
         private List<SavedData> SavedData { get; set; } = new List<SavedData>();
-        public List<SavedData> ToSave { get; set; } = new List<SavedData>();
+        public ObservableCollection<SavedData> ToSave { get; set; } = new ObservableCollection<SavedData>();
+        public bool IsConnected { get; set; } = false;
         public bool SaveInProgress { get; set; } = false;
+        public int AutoSaveCounter { get => autoSaveCounter; set => SetProperty(ref autoSaveCounter, value); }
         public double GetMedian(int counter)
         {
-            return SavedData.Concat(ToSave).TakeLast(counter).Select(t => t.Crash).Median();
+            var z = SavedData.Concat(ToSave).TakeLast(counter).Select(t => t.Crash).Median();
+            if (double.IsNaN(z))
+                return 0d;
+            else
+                return z;
         }
-        private void SetConnAndRead()
+        public async void SetConnAndRead()
         {
-            Service = AuthorizeGoogleApp();
-            //get table info
-            GetSheets();
-            StatusChanged?.Invoke("Sheets data readed");
+            if (IsConnecting)
+                return;
+            IsConnecting = true;
+            await Task.Run(() =>
+            {
+                Service = AuthorizeGoogleApp();
+                //get table info
+                GetSheets();
+                IsConnected = true;
+                IsConnecting = false;
+                StatusChanged?.Invoke("Sheets data readed");
+            });
         }
         private void AddEmptyRows(int count)
         {
@@ -126,21 +157,24 @@ namespace Har_reader
                         StatusChanged?.Invoke("No new data to save");
                         return;
                     }
-                    
+                    if (SaveInProgress)
+                        StatusChanged?.Invoke("Save already in progress.. Waiting..");
+                    while (SaveInProgress)
+                    {
+                        Task.Delay(100);
+                    }
                     StatusChanged?.Invoke("Saving Data to google");
-                    //var buf = mess.Select(t => t.GameId).Except(SavedData.Saved.Keys);
-                    //if (buf.Count() < 1)
-                    //{
-                    //    StatusChanged?.Invoke("Nothing to save");
-                    //    return;
-                    //}
                     SaveInProgress = true;
-                    if (Service is null)
+                    if (!IsConnected)//(Service is null)
                         SetConnAndRead();
-                    //var to_save = mess.Where(t => buf.Contains(t.GameId)).Where(t => t.GameCrash != null);
+                    while (!IsConnected)
+                    {
+                        Task.Delay(100);
+                    }
                     InsertLogData();
                     SavedData.AddRange(ToSave);
                     ToSave.Clear();
+                    SavedData.Distinct();
                     StatusChanged?.Invoke("Saved!");
                     SaveInProgress = false;
                 }
@@ -153,6 +187,7 @@ namespace Har_reader
         }
         private void InsertLogData()
         {
+            int skipped = 0;
             CheckSheetsExist();
             StatusChanged?.Invoke("Generate insert request");
             Request rq = new Request();
@@ -174,6 +209,11 @@ namespace Har_reader
             var aq = new List<SavedData>(ToSave.OrderBy(t => t.Id)); //new List<UnitedSockMess>(mess.OrderBy(t => t.GameId));
             foreach (var item in aq)
             {
+                if (SavedData.Any(t => t.Id == item.Id))
+                {
+                    skipped++;
+                    continue;
+                }
                 RowData row = new RowData();
                 row.Values = new List<CellData>
                 {
@@ -193,7 +233,10 @@ namespace Har_reader
                 Requests = new List<Request>() { rq }
             };
             _ = Service.Spreadsheets.BatchUpdate(updateRequest, SpreadSheetId).Execute();
-            StatusChanged?.Invoke("Saving Done!");
+            string l = $"Saving Done!";
+            if(skipped > 0)
+                l+= $"skipped {skipped} as dupl.";
+            StatusChanged?.Invoke(l);
         }
         private void CheckSheetsExist()
         {

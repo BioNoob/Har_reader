@@ -243,7 +243,7 @@
                             <ToolTip Content="IF 0 = disable AutoSave"/>
                         </Label.ToolTip>
                     </Label>
-                    <TextBox FontSize="10" Grid.Column="2" Width="25" Padding="0" Margin="10,0,0,0" Text="{Binding AutoSaveCounter}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">
+                    <TextBox FontSize="10" Grid.Column="2" Width="25" Padding="0" Margin="10,0,0,0" Text="{Binding GP.AutoSaveCounter}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center">
                         <TextBox.ToolTip>
                             <ToolTip Content="IF 0 = disable AutoSave"/>
                         </TextBox.ToolTip>

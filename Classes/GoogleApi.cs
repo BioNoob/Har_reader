@@ -84,13 +84,26 @@ namespace Har_reader
         public bool IsConnected { get; set; } = false;
         public bool SaveInProgress { get; set; } = false;
         public int AutoSaveCounter { get => autoSaveCounter; set => SetProperty(ref autoSaveCounter, value); }
-        public double GetMedian(int counter)
+        public enum CalcMedType
         {
-            var z = SavedData.Concat(ToSave).TakeLast(counter).Select(t => t.Crash).Median();
-            if (double.IsNaN(z))
-                return 0d;
-            else
-                return z;
+            FiveHundr,
+            Hundr,
+            Thous,
+            Calculated
+        }
+        public Dictionary<CalcMedType, double> GetMedian(int counter)
+        {
+            var unt = SavedData.Concat(ToSave).Select(t => t.Crash);
+            var zCNT = unt.TakeLast(counter).Median();
+            var z5 = unt.TakeLast(500).Median();
+            var z1 = unt.TakeLast(100).Median();
+            var z10 = unt.TakeLast(1000).Median();
+            Dictionary<CalcMedType, double> ret = new Dictionary<CalcMedType, double>();
+            ret.Add(CalcMedType.Calculated, double.IsNaN(zCNT) ? 0d : zCNT);
+            ret.Add(CalcMedType.FiveHundr, double.IsNaN(z5) ? 0d : z5);
+            ret.Add(CalcMedType.Hundr, double.IsNaN(z1) ? 0d : z1);
+            ret.Add(CalcMedType.Thous, double.IsNaN(z10) ? 0d : z10);
+            return ret;
         }
         public async void SetConnAndRead()
         {
@@ -234,8 +247,8 @@ namespace Har_reader
             };
             _ = Service.Spreadsheets.BatchUpdate(updateRequest, SpreadSheetId).Execute();
             string l = $"Saving Done!";
-            if(skipped > 0)
-                l+= $"skipped {skipped} as dupl.";
+            if (skipped > 0)
+                l += $"skipped {skipped} as dupl.";
             StatusChanged?.Invoke(l);
         }
         private void CheckSheetsExist()

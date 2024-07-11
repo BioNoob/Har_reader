@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:MinHeight="50" d:MinWidth="190">
     <UserControl.Resources>
-        <Style TargetType="Button">
+        <Style TargetType="TextBox">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="MinWidth" Value="35"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -36,15 +36,15 @@
             <Label Grid.ColumnSpan="4" Content="Median control" Padding="0" Margin="5,0,5,5"
                VerticalContentAlignment="Top" HorizontalAlignment="Stretch"
                VerticalAlignment="Top" HorizontalContentAlignment="Center"/>
-            <TextBox Grid.ColumnSpan="3" Height="20" Margin="5,0" Grid.Row="1" PreviewTextInput="TextBox_PreviewTextInput"
-                     Text="{Binding Counter}" VerticalContentAlignment="Center"/>
-            <Button Grid.Row="2" Content="1000" Command="{Binding ChangeCountVal}" CommandParameter="1000"/>
-            <Button Grid.Row="2" Grid.Column="1" Content="500" Command="{Binding ChangeCountVal}" CommandParameter="500"/>
-            <Button Grid.Row="2" Grid.Column="2" Content="100" Command="{Binding ChangeCountVal}" CommandParameter="100"/>
-            <Label Grid.Column="3" Grid.Row="1" Content="Median value" Padding="0" FontSize="11" Margin="10,0,0,0"
-               VerticalContentAlignment="Bottom" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-            <TextBox IsReadOnly="True" Text="{Binding CalcMedian, StringFormat={}{0:F2}}" Grid.Row="2" Grid.Column="3"
-                     MinWidth="30" Foreground="Gray" VerticalContentAlignment="Center" Height="20" Margin="10,0,0,0"/>
+            <TextBox Grid.Column="3" Height="20" Margin="5,0" Grid.Row="1" PreviewTextInput="TextBox_PreviewTextInput"
+                     Text="{Binding Counter}" VerticalContentAlignment="Center" />
+            <Label Grid.Column="0" Grid.Row="1" Content="1000" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <Label Grid.Column="1" Grid.Row="1" Content="500" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <Label Grid.Column="2" Grid.Row="1" Content="100" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
+            <TextBox Grid.Row="2" Text="{Binding MedianT, StringFormat={}{0:F2}}" IsReadOnly="True" Foreground="Gray"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding MedianFH, StringFormat={}{0:F2}}" IsReadOnly="True" Foreground="Gray"/>
+            <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding MedianH, StringFormat={}{0:F2}}" IsReadOnly="True" Foreground="Gray"/>
+            <TextBox IsReadOnly="True" Text="{Binding CalcMedian, StringFormat={}{0:F2}}" Grid.Row="2" Grid.Column="3" Foreground="Gray"/>
         </Grid>
         <Rectangle Stroke="Black" Height="1" StrokeThickness="4" VerticalAlignment="Bottom" Margin="5,0"/>
     </StackPanel>

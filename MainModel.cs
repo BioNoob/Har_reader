@@ -105,7 +105,7 @@ namespace Har_reader
 
         private void MM_RequestMedianEvent()
         {
-            MM.CalcMedian = GP.GetMedian(MM.Counter);
+            MM.SetMedians(GP.GetMedian(MM.Counter));
         }
 
         private void BM_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -270,7 +270,7 @@ namespace Har_reader
             {
                 CrashCount++;
                 GP.ToSave.Add(new SavedData() { Id = q.GameId, Crash = q.GameCrash.Value, Profit = q.Profit, Dt = q.DateOfGame });
-                MM.CalcMedian = GP.GetMedian(MM.Counter);
+                MM.SetMedians(GP.GetMedian(MM.Counter));
             }
                 
         }
